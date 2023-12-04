@@ -12,18 +12,23 @@ import kotlinx.parcelize.Parcelize
 
 object ActivityTransitionAnimation {
     @Suppress("DEPRECATION", "deprecated in API34 for predictive back, must plumb through new open/close parameter")
-    fun slide(activity: Activity, direction: Direction?) {
+    fun slide(
+        activity: Activity,
+        direction: Direction?,
+    ) {
         when (direction) {
-            Direction.START -> if (isRightToLeft(activity)) {
-                activity.overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
-            } else {
-                activity.overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out)
-            }
-            Direction.END -> if (isRightToLeft(activity)) {
-                activity.overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out)
-            } else {
-                activity.overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
-            }
+            Direction.START ->
+                if (isRightToLeft(activity)) {
+                    activity.overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
+                } else {
+                    activity.overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out)
+                }
+            Direction.END ->
+                if (isRightToLeft(activity)) {
+                    activity.overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out)
+                } else {
+                    activity.overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
+                }
             Direction.RIGHT -> activity.overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out)
             Direction.LEFT -> activity.overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out)
             Direction.FADE -> activity.overridePendingTransition(R.anim.fade_out, R.anim.fade_in)
@@ -38,10 +43,37 @@ object ActivityTransitionAnimation {
         }
     }
 
-    fun getAnimationOptions(activity: Activity, direction: Direction?): ActivityOptionsCompat {
+    fun getAnimationOptions(
+        activity: Activity,
+        direction: Direction?,
+    ): ActivityOptionsCompat {
         return when (direction) {
-            Direction.START -> if (isRightToLeft(activity)) ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_right_in, R.anim.slide_right_out) else ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_left_in, R.anim.slide_left_out)
-            Direction.END -> if (isRightToLeft(activity)) ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_left_in, R.anim.slide_left_out) else ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_right_in, R.anim.slide_right_out)
+            Direction.START ->
+                if (isRightToLeft(
+                        activity,
+                    )
+                ) {
+                    ActivityOptionsCompat.makeCustomAnimation(
+                        activity,
+                        R.anim.slide_right_in,
+                        R.anim.slide_right_out,
+                    )
+                } else {
+                    ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_left_in, R.anim.slide_left_out)
+                }
+            Direction.END ->
+                if (isRightToLeft(
+                        activity,
+                    )
+                ) {
+                    ActivityOptionsCompat.makeCustomAnimation(
+                        activity,
+                        R.anim.slide_left_in,
+                        R.anim.slide_left_out,
+                    )
+                } else {
+                    ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_right_in, R.anim.slide_right_out)
+                }
             Direction.RIGHT -> ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_right_in, R.anim.slide_right_out)
             Direction.LEFT -> ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.slide_left_in, R.anim.slide_left_out)
             Direction.FADE -> ActivityOptionsCompat.makeCustomAnimation(activity, R.anim.fade_out, R.anim.fade_in)
@@ -61,7 +93,16 @@ object ActivityTransitionAnimation {
 
     @Parcelize
     enum class Direction : Parcelable {
-        START, END, FADE, UP, DOWN, RIGHT, LEFT, DEFAULT, DIALOG_EXIT, NONE
+        START,
+        END,
+        FADE,
+        UP,
+        DOWN,
+        RIGHT,
+        LEFT,
+        DEFAULT,
+        DIALOG_EXIT,
+        NONE,
     }
 
     /**

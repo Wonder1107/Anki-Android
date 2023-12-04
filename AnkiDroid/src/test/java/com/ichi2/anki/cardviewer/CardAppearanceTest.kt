@@ -26,7 +26,6 @@ import org.mockito.kotlin.whenever
 import kotlin.test.junit5.JUnit5Asserter.assertTrue
 
 class CardAppearanceTest {
-
     @Test
     fun hasUserDefinedNightModeTest() {
         val mockCard = Mockito.mock(Card::class.java)

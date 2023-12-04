@@ -175,7 +175,9 @@ class AbstractFlashcardViewerCommandTest : RobolectricTest() {
         return CommandTestCardViewer(cardWith(FLAG_NONE))
     }
 
-    private fun cardWith(@Suppress("SameParameterValue") @FlagDef flag: Int): Card {
+    private fun cardWith(
+        @Suppress("SameParameterValue") @FlagDef flag: Int,
+    ): Card {
         val c = mock(Card::class.java)
         val flags = intArrayOf(flag)
         whenever(c.userFlag()).then { flags[0] }
@@ -210,7 +212,10 @@ class AbstractFlashcardViewerCommandTest : RobolectricTest() {
         override val isControlBlocked: Boolean
             get() = controlBlocked !== ControlBlock.UNBLOCKED
 
-        override fun onFlag(card: Card?, @FlagDef flag: Int) {
+        override fun onFlag(
+            card: Card?,
+            @FlagDef flag: Int,
+        ) {
             lastFlag = flag
             currentCard!!.setUserFlag(flag)
         }

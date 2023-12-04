@@ -34,9 +34,13 @@ object TestUtils {
     /**
      * Get view at a particular index when there are multiple views with the same ID
      */
-    fun withIndex(matcher: Matcher<View?>, index: Int): Matcher<View> {
+    fun withIndex(
+        matcher: Matcher<View?>,
+        index: Int,
+    ): Matcher<View> {
         return object : TypeSafeMatcher<View>() {
             var currentIndex = 0
+
             override fun describeTo(description: Description) {
                 description.appendText("with index: ")
                 description.appendValue(index)
@@ -58,7 +62,7 @@ object TestUtils {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 val resumedActivities: Collection<*> =
                     ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
-                        Stage.RESUMED
+                        Stage.RESUMED,
                     )
                 if (resumedActivities.iterator().hasNext()) {
                     val currentActivity = resumedActivities.iterator().next() as Activity
@@ -95,7 +99,10 @@ object TestUtils {
                 return "Click on a child view with specified id."
             }
 
-            override fun perform(uiController: UiController, view: View) {
+            override fun perform(
+                uiController: UiController,
+                view: View,
+            ) {
                 val v = view.findViewById<View>(id)
                 v.performClick()
             }

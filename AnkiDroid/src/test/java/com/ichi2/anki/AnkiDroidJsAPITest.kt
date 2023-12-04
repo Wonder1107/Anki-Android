@@ -32,7 +32,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AnkiDroidJsAPITest : RobolectricTest() {
-
     @Test
     fun initTest() {
         val models = col.notetypes
@@ -316,35 +315,36 @@ class AnkiDroidJsAPITest : RobolectricTest() {
     }
 
     @Test
-    fun ankiSetCardDueTest() = runTest {
-        TimeManager.reset()
-        val models = col.notetypes
-        val decks = col.decks
-        val didA = addDeck("Test")
-        val basic = models.byName(AnkiDroidApp.appResources.getString(R.string.basic_model_name))
-        basic!!.put("did", didA)
-        addNoteUsingBasicModel("foo", "bar")
-        addNoteUsingBasicModel("baz", "bak")
-        decks.select(didA)
+    fun ankiSetCardDueTest() =
+        runTest {
+            TimeManager.reset()
+            val models = col.notetypes
+            val decks = col.decks
+            val didA = addDeck("Test")
+            val basic = models.byName(AnkiDroidApp.appResources.getString(R.string.basic_model_name))
+            basic!!.put("did", didA)
+            addNoteUsingBasicModel("foo", "bar")
+            addNoteUsingBasicModel("baz", "bak")
+            decks.select(didA)
 
-        val reviewer: Reviewer = startReviewer()
-        waitForAsyncTasksToComplete()
+            val reviewer: Reviewer = startReviewer()
+            waitForAsyncTasksToComplete()
 
-        val javaScriptFunction = reviewer.javaScriptFunction()
-        // init js api
-        javaScriptFunction.init(initJsApiContract())
-        // get card id for testing due
-        val cardId = javaScriptFunction.ankiGetCardId()
+            val javaScriptFunction = reviewer.javaScriptFunction()
+            // init js api
+            javaScriptFunction.init(initJsApiContract())
+            // get card id for testing due
+            val cardId = javaScriptFunction.ankiGetCardId()
 
-        // test that card rescheduled for 15 days interval and returned true
-        assertTrue("Card rescheduled, so returns true", javaScriptFunction.ankiSetCardDue(15))
-        waitForAsyncTasksToComplete()
+            // test that card rescheduled for 15 days interval and returned true
+            assertTrue("Card rescheduled, so returns true", javaScriptFunction.ankiSetCardDue(15))
+            waitForAsyncTasksToComplete()
 
-        // verify that it did get rescheduled
-        // --------------------------------
-        val cardAfterRescheduleCards = col.getCard(cardId)
-        assertEquals("Card is rescheduled", 15L + col.sched.today, cardAfterRescheduleCards.due)
-    }
+            // verify that it did get rescheduled
+            // --------------------------------
+            val cardAfterRescheduleCards = col.getCard(cardId)
+            assertEquals("Card is rescheduled", 15L + col.sched.today, cardAfterRescheduleCards.due)
+        }
 
     private fun initJsApiContract(): String {
         val data = JSONObject()
@@ -354,40 +354,41 @@ class AnkiDroidJsAPITest : RobolectricTest() {
     }
 
     @Test
-    fun ankiResetProgressTest() = runTest {
-        val n = addNoteUsingBasicModel("Front", "Back")
-        val c = n.firstCard()
+    fun ankiResetProgressTest() =
+        runTest {
+            val n = addNoteUsingBasicModel("Front", "Back")
+            val c = n.firstCard()
 
-        // Make card review with 28L due and 280% ease
-        c.type = Consts.CARD_TYPE_REV
-        c.due = 28L
-        c.factor = 2800
-        c.ivl = 8
+            // Make card review with 28L due and 280% ease
+            c.type = Consts.CARD_TYPE_REV
+            c.due = 28L
+            c.factor = 2800
+            c.ivl = 8
 
-        // before reset
-        assertEquals("Card due before reset", 28L, c.due)
-        assertEquals("Card interval before reset", 8, c.ivl)
-        assertEquals("Card ease before reset", 2800, c.factor)
-        assertEquals("Card type before reset", Consts.CARD_TYPE_REV, c.type)
+            // before reset
+            assertEquals("Card due before reset", 28L, c.due)
+            assertEquals("Card interval before reset", 8, c.ivl)
+            assertEquals("Card ease before reset", 2800, c.factor)
+            assertEquals("Card type before reset", Consts.CARD_TYPE_REV, c.type)
 
-        val reviewer: Reviewer = startReviewer()
-        waitForAsyncTasksToComplete()
+            val reviewer: Reviewer = startReviewer()
+            waitForAsyncTasksToComplete()
 
-        val javaScriptFunction = reviewer.javaScriptFunction()
-        // init js api
-        javaScriptFunction.init(initJsApiContract())
-        // get card id for testing due
-        val cardId = javaScriptFunction.ankiGetCardId()
+            val javaScriptFunction = reviewer.javaScriptFunction()
+            // init js api
+            javaScriptFunction.init(initJsApiContract())
+            // get card id for testing due
+            val cardId = javaScriptFunction.ankiGetCardId()
 
-        // test that card reset
-        assertTrue("Card progress reset", javaScriptFunction.ankiResetProgress())
-        waitForAsyncTasksToComplete()
+            // test that card reset
+            assertTrue("Card progress reset", javaScriptFunction.ankiResetProgress())
+            waitForAsyncTasksToComplete()
 
-        // verify that card progress reset
-        // --------------------------------
-        val cardAfterReset = col.getCard(cardId)
-        assertEquals("Card due after reset", 2, cardAfterReset.due)
-        assertEquals("Card interval after reset", 0, cardAfterReset.ivl)
-        assertEquals("Card type after reset", Consts.CARD_TYPE_NEW, cardAfterReset.type)
-    }
+            // verify that card progress reset
+            // --------------------------------
+            val cardAfterReset = col.getCard(cardId)
+            assertEquals("Card due after reset", 2, cardAfterReset.due)
+            assertEquals("Card interval after reset", 0, cardAfterReset.ivl)
+            assertEquals("Card type after reset", Consts.CARD_TYPE_NEW, cardAfterReset.type)
+        }
 }

@@ -22,7 +22,6 @@ import org.hamcrest.Matchers.greaterThanOrEqualTo
 import org.junit.Test
 
 class ThreadUtilTest {
-
     @SuppressLint("DirectSystemCurrentTimeMillisUsage")
     @Test(timeout = 5000) // timeout makes sure that test fails if it hangs
     fun sleepTest() {
@@ -32,6 +31,9 @@ class ThreadUtilTest {
 
         val end: Long = System.currentTimeMillis()
 
-        assertThat(end - start, greaterThanOrEqualTo(100)) // checking if the time difference between "end" and "start" indicates we actually slept
+        assertThat(
+            end - start,
+            greaterThanOrEqualTo(100),
+        ) // checking if the time difference between "end" and "start" indicates we actually slept
     }
 }

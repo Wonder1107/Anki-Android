@@ -14,7 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 class FlagToDisplayTest {
-
     @ParameterizedTest
     @ValueSource(ints = [FLAG_NONE, FLAG_RED, FLAG_ORANGE, FLAG_GREEN, FLAG_BLUE, FLAG_PINK, FLAG_TURQUOISE, FLAG_PURPLE])
     fun `is hidden if flag is on app bar and fullscreen is disabled`(actualFlag: Int) {

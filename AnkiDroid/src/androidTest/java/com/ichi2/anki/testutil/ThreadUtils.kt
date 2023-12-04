@@ -25,7 +25,10 @@ object ThreadUtils {
     }
 
     @Suppress("Unused")
-    fun runAndJoin(runnable: Runnable, timeout: Int) {
+    fun runAndJoin(
+        runnable: Runnable,
+        timeout: Int,
+    ) {
         val t = Thread(runnable)
         t.start()
         try {

@@ -72,7 +72,7 @@ abstract class InstrumentedTest {
                     Build.PRODUCT.contains("vbox86p") ||
                     Build.PRODUCT.contains("emulator") ||
                     Build.PRODUCT.contains("simulator")
-                )
+            )
         }
     }
 }

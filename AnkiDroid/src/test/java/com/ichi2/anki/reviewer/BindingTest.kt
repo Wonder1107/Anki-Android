@@ -69,17 +69,33 @@ class BindingTest {
         assertThat(Binding.unknown().toString(), equalTo(""))
     }
 
-    private fun testModifierKeys(name: String, event: KFunction1<KeyEvent, Boolean>, getValue: KFunction2<Binding.ModifierKeys, Boolean, Boolean>) {
-        fun testModifierResult(event: KFunction1<KeyEvent, Boolean>, returnedFromMock: Boolean) {
-            val mock = mock<KeyEvent> {
-                on(event) doReturn returnedFromMock
-            }
+    private fun testModifierKeys(
+        name: String,
+        event: KFunction1<KeyEvent, Boolean>,
+        getValue: KFunction2<Binding.ModifierKeys, Boolean, Boolean>,
+    ) {
+        fun testModifierResult(
+            event: KFunction1<KeyEvent, Boolean>,
+            returnedFromMock: Boolean,
+        ) {
+            val mock =
+                mock<KeyEvent> {
+                    on(event) doReturn returnedFromMock
+                }
 
             val bindings = Binding.key(mock)
 
             for (binding in bindings) {
-                assertThat("Should match when '$name:$returnedFromMock': ", getValue(binding.modifierKeys!!, true), equalTo(returnedFromMock))
-                assertThat("Should match when '$name:${!returnedFromMock}': ", getValue(binding.modifierKeys!!, false), equalTo(!returnedFromMock))
+                assertThat(
+                    "Should match when '$name:$returnedFromMock': ",
+                    getValue(binding.modifierKeys!!, true),
+                    equalTo(returnedFromMock),
+                )
+                assertThat(
+                    "Should match when '$name:${!returnedFromMock}': ",
+                    getValue(binding.modifierKeys!!, false),
+                    equalTo(!returnedFromMock),
+                )
             }
         }
 
@@ -95,18 +111,20 @@ class BindingTest {
         fun allModifierKeys() = Binding.ModifierKeys(true, true, true)
 
         fun unicodeCharacter(c: Char): Binding {
-            val mock = mock<KeyEvent> {
-                on { getUnicodeChar(anyInt()) } doReturn c.code
-                on { unicodeChar } doReturn c.code
-            }
+            val mock =
+                mock<KeyEvent> {
+                    on { getUnicodeChar(anyInt()) } doReturn c.code
+                    on { unicodeChar } doReturn c.code
+                }
 
             return Binding.key(mock).first { x -> x.unicodeCharacter != null }
         }
 
         fun keyCode(keyCode: Int): Binding {
-            val mock = mock<KeyEvent> {
-                on { getKeyCode() } doReturn keyCode
-            }
+            val mock =
+                mock<KeyEvent> {
+                    on { getKeyCode() } doReturn keyCode
+                }
 
             return Binding.key(mock).first { x -> x.keycode != null }
         }

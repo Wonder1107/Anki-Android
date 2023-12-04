@@ -83,18 +83,18 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(
             "Sync ver should be updated if we have a valid Rust collection",
             SYNC_VER,
-            Matchers.equalTo(10)
+            Matchers.equalTo(10),
         )
         MatcherAssert.assertThat(
             "localOffset should be set if using V2 Scheduler",
             col.config.get<Int?>("localOffset") != null,
-            Matchers.equalTo(true)
+            Matchers.equalTo(true),
         )
         val sched = col.sched
         MatcherAssert.assertThat(
             "new timezone should be enabled by default",
             sched.newTimezoneEnabled(),
-            Matchers.equalTo(true)
+            Matchers.equalTo(true),
         )
 
         // a second call should be fine
@@ -102,7 +102,7 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(
             "new timezone should still be enabled",
             sched.newTimezoneEnabled(),
-            Matchers.equalTo(true)
+            Matchers.equalTo(true),
         )
         // we can obtain the offset from "crt" without an issue - do not test the return as it depends on the local timezone
         sched.currentTimezoneOffset()
@@ -110,7 +110,7 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(
             "new timezone should be disabled after clear",
             sched.newTimezoneEnabled(),
-            Matchers.equalTo(false)
+            Matchers.equalTo(false),
         )
     }
 
@@ -259,7 +259,7 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(dueIn, Matchers.greaterThanOrEqualTo(178L))
         MatcherAssert.assertThat(
             dueIn,
-            Matchers.lessThanOrEqualTo((180 * 1.25).toLong())
+            Matchers.lessThanOrEqualTo((180 * 1.25).toLong()),
         )
         Assert.assertEquals(2, (c.left % 1000).toLong())
         // check log is accurate
@@ -275,7 +275,7 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(dueIn, Matchers.greaterThanOrEqualTo(599L))
         MatcherAssert.assertThat(
             dueIn,
-            Matchers.lessThanOrEqualTo((600 * 1.25).toLong())
+            Matchers.lessThanOrEqualTo((600 * 1.25).toLong()),
         )
         Assert.assertEquals(1, (c.left % 1000).toLong())
         // the next pass should graduate the card
@@ -298,7 +298,7 @@ open class SchedulerTest : JvmTest() {
         // revlog should have been updated each time
         Assert.assertEquals(
             5,
-            col.db.queryScalar("select count() from revlog where type = 0").toLong()
+            col.db.queryScalar("select count() from revlog where type = 0").toLong(),
         )
     }
 
@@ -310,12 +310,13 @@ open class SchedulerTest : JvmTest() {
         val note = col.newNote()
         note.setItem("Front", "one")
         col.addNote(note)
-        var c = note.cards()[0].apply {
-            ivl = 100
-            due = col.sched.today.toLong()
-            queue = QUEUE_TYPE_REV
-            type = CARD_TYPE_REV
-        }
+        var c =
+            note.cards()[0].apply {
+                ivl = 100
+                due = col.sched.today.toLong()
+                queue = QUEUE_TYPE_REV
+                type = CARD_TYPE_REV
+            }
         c.col.updateCard(c, skipUndoEntry = true)
 
         // fail the card
@@ -340,12 +341,13 @@ open class SchedulerTest : JvmTest() {
         val note = col.newNote()
         note.setItem("Front", "one")
         col.addNote(note)
-        var c = note.cards()[0].apply {
-            ivl = 100
-            due = col.sched.today.toLong()
-            queue = QUEUE_TYPE_REV
-            type = CARD_TYPE_REV
-        }
+        var c =
+            note.cards()[0].apply {
+                ivl = 100
+                due = col.sched.today.toLong()
+                queue = QUEUE_TYPE_REV
+                type = CARD_TYPE_REV
+            }
         c.col.updateCard(c, skipUndoEntry = true)
         val conf = col.decks.confForDid(1)
         conf.getJSONObject("lapse").put("delays", JSONArray(doubleArrayOf()))
@@ -457,15 +459,16 @@ open class SchedulerTest : JvmTest() {
         note.setItem("Back", "two")
         col.addNote(note)
         // set the card up as a review card, due 8 days ago
-        var c = note.cards()[0].apply {
-            type = CARD_TYPE_REV
-            queue = QUEUE_TYPE_REV
-            due = (col.sched.today - 8).toLong()
-            factor = STARTING_FACTOR
-            setReps(3)
-            lapses = 1
-            ivl = 100
-        }
+        var c =
+            note.cards()[0].apply {
+                type = CARD_TYPE_REV
+                queue = QUEUE_TYPE_REV
+                due = (col.sched.today - 8).toLong()
+                factor = STARTING_FACTOR
+                setReps(3)
+                lapses = 1
+                ivl = 100
+            }
         c.startTimer()
         c.col.updateCard(c, skipUndoEntry = true)
         // save it for later use as well
@@ -525,7 +528,7 @@ open class SchedulerTest : JvmTest() {
         assertEquals(QUEUE_TYPE_SUSPENDED, c.getQueue());
         c.load();
         assertEquals(QUEUE_TYPE_SUSPENDED, c.getQueue());
-        */
+         */
     }
 
     @Test
@@ -547,25 +550,25 @@ open class SchedulerTest : JvmTest() {
         // Upstream, there is no space in 2d
         Assert.assertEquals(
             "2d",
-            AnkiAssert.without_unicode_isolation(col.sched.nextIvlStr(c, BUTTON_TWO))
+            AnkiAssert.without_unicode_isolation(col.sched.nextIvlStr(c, BUTTON_TWO)),
         )
         Assert.assertEquals(
             "3d",
             AnkiAssert.without_unicode_isolation(
                 col.sched.nextIvlStr(
                     c,
-                    BUTTON_THREE
-                )
-            )
+                    BUTTON_THREE,
+                ),
+            ),
         )
         Assert.assertEquals(
             "4d",
             AnkiAssert.without_unicode_isolation(
                 col.sched.nextIvlStr(
                     c,
-                    BUTTON_FOUR
-                )
-            )
+                    BUTTON_FOUR,
+                ),
+            ),
         )
 
         // if hard factor is <= 1, then hard may not increase
@@ -574,7 +577,7 @@ open class SchedulerTest : JvmTest() {
         col.decks.save(conf)
         Assert.assertEquals(
             "1d",
-            AnkiAssert.without_unicode_isolation(col.sched.nextIvlStr(c, BUTTON_TWO))
+            AnkiAssert.without_unicode_isolation(col.sched.nextIvlStr(c, BUTTON_TWO)),
         )
     }
 
@@ -613,7 +616,7 @@ open class SchedulerTest : JvmTest() {
            // learning queue
            col.getSched().reset();
            assertEquals(new Counts(0, 0, 1), col.getSched().counts());
-        */
+         */
     }
 
     @Test
@@ -623,13 +626,13 @@ open class SchedulerTest : JvmTest() {
         // nothing due
         MatcherAssert.assertThat(
             col.sched.finishedMsg().toString(),
-            Matchers.containsString("Congratulations")
+            Matchers.containsString("Congratulations"),
         )
         MatcherAssert.assertThat(
             col.sched.finishedMsg().toString(),
             Matchers.not(
-                Matchers.containsString("limit")
-            )
+                Matchers.containsString("limit"),
+            ),
         )
         val note = col.newNote()
         note.setItem("Front", "one")
@@ -638,7 +641,7 @@ open class SchedulerTest : JvmTest() {
         // have a new card
         MatcherAssert.assertThat(
             col.sched.finishedMsg().toString(),
-            Matchers.containsString("new cards available")
+            Matchers.containsString("new cards available"),
         )
         // turn it into a review
         val c = note.cards()[0]
@@ -647,13 +650,13 @@ open class SchedulerTest : JvmTest() {
         // nothing should be due tomorrow, as it's due in a week
         MatcherAssert.assertThat(
             col.sched.finishedMsg().toString(),
-            Matchers.containsString("Congratulations")
+            Matchers.containsString("Congratulations"),
         )
         MatcherAssert.assertThat(
             col.sched.finishedMsg().toString(),
             Matchers.not(
-                Matchers.containsString("limit")
-            )
+                Matchers.containsString("limit"),
+            ),
         )
     }
 
@@ -724,10 +727,10 @@ open class SchedulerTest : JvmTest() {
             AnkiAssert.without_unicode_isolation(
                 col.sched.nextIvlStr(
                     c,
-                    BUTTON_FOUR
-                )
+                    BUTTON_FOUR,
+                ),
             ),
-            Matchers.equalTo("10.8mo")
+            Matchers.equalTo("10.8mo"),
         )
     }
 
@@ -789,7 +792,7 @@ open class SchedulerTest : JvmTest() {
         col.sched.answerCard(c, BUTTON_ONE)
         MatcherAssert.assertThat(
             c.due,
-            Matchers.greaterThanOrEqualTo(time.intTime())
+            Matchers.greaterThanOrEqualTo(time.intTime()),
         )
         val due = c.due
         Assert.assertEquals(QUEUE_TYPE_LRN, c.queue)
@@ -823,15 +826,16 @@ open class SchedulerTest : JvmTest() {
         val note = col.newNote()
         note.setItem("Front", "one")
         col.addNote(note)
-        var c = note.cards()[0].apply {
-            ivl = 100
-            queue = QUEUE_TYPE_REV
-            type = CARD_TYPE_REV
-            // due in 25 days, so it's been waiting 75 days
-            due = (col.sched.today + 25).toLong()
-            mod = 1
-            factor = STARTING_FACTOR
-        }
+        var c =
+            note.cards()[0].apply {
+                ivl = 100
+                queue = QUEUE_TYPE_REV
+                type = CARD_TYPE_REV
+                // due in 25 days, so it's been waiting 75 days
+                due = (col.sched.today + 25).toLong()
+                mod = 1
+                factor = STARTING_FACTOR
+            }
 
         c.startTimer()
         c.col.updateCard(c, skipUndoEntry = true)
@@ -842,7 +846,7 @@ open class SchedulerTest : JvmTest() {
         // should appear as normal in the deck list
         /* todo sort
            assertEquals(1, sorted(col.getSched().deckDueTree().getChildren())[0].review_count);
-        */
+         */
         // and should appear in the counts
         Assert.assertEquals(Counts(0, 0, 1), col.sched.counts())
         // grab it and check estimates
@@ -850,16 +854,16 @@ open class SchedulerTest : JvmTest() {
         Assert.assertEquals(600, col.sched.nextIvl(c, BUTTON_ONE))
         Assert.assertEquals(
             (75 * 1.2).roundToInt() * SECONDS_PER_DAY,
-            col.sched.nextIvl(c, BUTTON_TWO)
+            col.sched.nextIvl(c, BUTTON_TWO),
         )
         val toLong = fun(v: Double) = v.roundToLong() * SECONDS_PER_DAY
         MatcherAssert.assertThat(
             col.sched.nextIvl(c, BUTTON_THREE),
-            equalTo(toLong(75 * 2.5))
+            equalTo(toLong(75 * 2.5)),
         )
         MatcherAssert.assertThat(
             col.sched.nextIvl(c, BUTTON_FOUR),
-            equalTo(toLong(75 * 2.5 * 1.15))
+            equalTo(toLong(75 * 2.5 * 1.15)),
         )
 
         // answer 'good'
@@ -872,7 +876,7 @@ open class SchedulerTest : JvmTest() {
         // should be logged as a cram rep
         Assert.assertEquals(
             3,
-            col.db.queryLongScalar("select type from revlog order by id desc limit 1")
+            col.db.queryLongScalar("select type from revlog order by id desc limit 1"),
         )
 
         // due in 75 days, so it's been waiting 25 days
@@ -922,7 +926,7 @@ open class SchedulerTest : JvmTest() {
         // should be due at least an hour in the future
         MatcherAssert.assertThat(
             c.due - time.intTime(),
-            Matchers.greaterThan(60 * 60L)
+            Matchers.greaterThan(60 * 60L),
         )
 
         // emptying the deck preserves learning state
@@ -933,7 +937,7 @@ open class SchedulerTest : JvmTest() {
         Assert.assertEquals(1, c.left % 1000)
         MatcherAssert.assertThat(
             c.due - time.intTime(),
-            Matchers.greaterThan(60 * 60L)
+            Matchers.greaterThan(60 * 60L),
         )
     }
 
@@ -1014,19 +1018,19 @@ open class SchedulerTest : JvmTest() {
         var c = sched.card
         sched.answerCard(
             c!!,
-            3
+            3,
         ) // not upstream. But we are not expecting multiple getCard without review
         Assert.assertEquals(0, c.ord)
         c = sched.card
         sched.answerCard(
             c!!,
-            3
+            3,
         ) // not upstream. But we are not expecting multiple getCard without review
         Assert.assertEquals(1, c.ord)
         c = sched.card
         sched.answerCard(
             c!!,
-            3
+            3,
         ) // not upstream. But we are not expecting multiple getCard without review
         Assert.assertEquals(2, c.ord)
     }
@@ -1284,7 +1288,7 @@ open class SchedulerTest : JvmTest() {
            assertEquals(4, note2.cards().get(0).getDue());
            assertEquals(1, note3.cards().get(0).getDue());
            assertEquals(2, note4.cards().get(0).getDue());
-        */
+         */
     }
 
     @Test
@@ -1408,7 +1412,7 @@ open class SchedulerTest : JvmTest() {
     @Test
     @Ignore("Port anki@a9c93d933cadbf5d9c7e3e2b4f7a25d2c59da5d3")
     @Throws(
-        Exception::class
+        Exception::class,
     )
     fun test_initial_repeat() {
         val col = col
@@ -1424,7 +1428,7 @@ open class SchedulerTest : JvmTest() {
         MatcherAssert.assertThat(expected - 10, Matchers.lessThan(due))
         MatcherAssert.assertThat(
             due,
-            Matchers.lessThanOrEqualTo((expected * 1.25).toLong())
+            Matchers.lessThanOrEqualTo((expected * 1.25).toLong()),
         )
         val ivl = col.db.queryLongScalar("select ivl from revlog")
         Assert.assertEquals((-5.5 * 60).toLong(), ivl)

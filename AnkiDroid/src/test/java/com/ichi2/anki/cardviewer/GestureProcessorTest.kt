@@ -34,7 +34,11 @@ import org.junit.Test
 class GestureProcessorTest : ViewerCommand.CommandProcessor {
     private val mSut = GestureProcessor(this)
     private val mExecutedCommands: MutableList<ViewerCommand> = ArrayList()
-    override fun executeCommand(which: ViewerCommand, fromGesture: Gesture?): Boolean {
+
+    override fun executeCommand(
+        which: ViewerCommand,
+        fromGesture: Gesture?,
+    ): Boolean {
         mExecutedCommands.add(which)
         return true
     }
@@ -47,7 +51,9 @@ class GestureProcessorTest : ViewerCommand.CommandProcessor {
     @Test
     fun integrationTest() {
         val prefs = mockk<SharedPreferences>(relaxed = true)
-        every { prefs.getString(ViewerCommand.SHOW_ANSWER.preferenceKey, null) } returns listOf(MappableBinding.fromGesture(Gesture.TAP_CENTER)).toPreferenceString()
+        every {
+            prefs.getString(ViewerCommand.SHOW_ANSWER.preferenceKey, null)
+        } returns listOf(MappableBinding.fromGesture(Gesture.TAP_CENTER)).toPreferenceString()
         every { prefs.getBoolean("gestureCornerTouch", any()) } returns true
         mSut.init(prefs)
         mSut.onTap(100, 100, 50f, 50f)

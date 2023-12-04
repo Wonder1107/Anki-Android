@@ -148,12 +148,12 @@ open class AnkiDroidApp : Application() {
             this,
             preferences.getBoolean(
                 getString(R.string.card_browser_external_context_menu_key),
-                false
-            )
+                false,
+            ),
         )
         AnkiCardContextMenu.ensureConsistentStateWithPreferenceStatus(
             this,
-            preferences.getBoolean(getString(R.string.anki_card_external_context_menu_key), true)
+            preferences.getBoolean(getString(R.string.anki_card_external_context_menu_key), true),
         )
         CompatHelper.compat.setupNotificationChannel(applicationContext)
 
@@ -188,41 +188,49 @@ open class AnkiDroidApp : Application() {
         // Register for notifications
         mNotifications.observeForever { NotificationService.triggerNotificationFor(this) }
 
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                Timber.i("${activity::class.simpleName}::onCreate")
-                (activity as? FragmentActivity)
-                    ?.supportFragmentManager
-                    ?.registerFragmentLifecycleCallbacks(
-                        FragmentLifecycleLogger(activity),
-                        true
-                    )
-            }
+        registerActivityLifecycleCallbacks(
+            object : ActivityLifecycleCallbacks {
+                override fun onActivityCreated(
+                    activity: Activity,
+                    savedInstanceState: Bundle?,
+                ) {
+                    Timber.i("${activity::class.simpleName}::onCreate")
+                    (activity as? FragmentActivity)
+                        ?.supportFragmentManager
+                        ?.registerFragmentLifecycleCallbacks(
+                            FragmentLifecycleLogger(activity),
+                            true,
+                        )
+                }
 
-            override fun onActivityStarted(activity: Activity) {
-                Timber.i("${activity::class.simpleName}::onStart")
-            }
+                override fun onActivityStarted(activity: Activity) {
+                    Timber.i("${activity::class.simpleName}::onStart")
+                }
 
-            override fun onActivityResumed(activity: Activity) {
-                Timber.i("${activity::class.simpleName}::onResume")
-            }
+                override fun onActivityResumed(activity: Activity) {
+                    Timber.i("${activity::class.simpleName}::onResume")
+                }
 
-            override fun onActivityPaused(activity: Activity) {
-                Timber.i("${activity::class.simpleName}::onPause")
-            }
+                override fun onActivityPaused(activity: Activity) {
+                    Timber.i("${activity::class.simpleName}::onPause")
+                }
 
-            override fun onActivityStopped(activity: Activity) {
-                Timber.i("${activity::class.simpleName}::onStop")
-            }
+                override fun onActivityStopped(activity: Activity) {
+                    Timber.i("${activity::class.simpleName}::onStop")
+                }
 
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-                Timber.i("${activity::class.simpleName}::onSaveInstanceState")
-            }
+                override fun onActivitySaveInstanceState(
+                    activity: Activity,
+                    outState: Bundle,
+                ) {
+                    Timber.i("${activity::class.simpleName}::onSaveInstanceState")
+                }
 
-            override fun onActivityDestroyed(activity: Activity) {
-                Timber.i("${activity::class.simpleName}::onDestroy")
-            }
-        })
+                override fun onActivityDestroyed(activity: Activity) {
+                    Timber.i("${activity::class.simpleName}::onDestroy")
+                }
+            },
+        )
 
         activityAgnosticDialogs = ActivityAgnosticDialogs.register(this)
         TtsVoices.launchBuildLocalesJob()
@@ -239,7 +247,7 @@ open class AnkiDroidApp : Application() {
             "android:%s:%s:%s",
             BuildConfig.VERSION_NAME,
             Build.VERSION.RELEASE,
-            model
+            model,
         )
     }
 
@@ -312,7 +320,12 @@ open class AnkiDroidApp : Application() {
             }
 
         // ----  END copied from Timber.DebugTree because DebugTree.getTag() is package private ----
-        override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        override fun log(
+            priority: Int,
+            tag: String?,
+            message: String,
+            t: Throwable?,
+        ) {
             when (priority) {
                 Log.VERBOSE, Log.DEBUG -> {}
                 Log.INFO -> Log.i(TAG, message, t)
@@ -329,7 +342,6 @@ open class AnkiDroidApp : Application() {
     }
 
     companion object {
-
         /**
          * [CoroutineScope] tied to the [Application], allowing executing of tasks which should
          * execute as long as the app is running
@@ -435,6 +447,7 @@ open class AnkiDroidApp : Application() {
             return Intent(Intent.ACTION_VIEW, parsed)
         } // TODO actually this can be done by translating "link_help" string for each language when the App is
         // properly translated
+
         /**
          * Get the url for the feedback page
          * @return
@@ -479,7 +492,12 @@ open class AnkiDroidApp : Application() {
     }
 
     class RobolectricDebugTree : DebugTree() {
-        override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        override fun log(
+            priority: Int,
+            tag: String?,
+            message: String,
+            t: Throwable?,
+        ) {
             // This is noisy in test environments
             when (tag) {
                 "Backend\$checkMainThreadOp" -> return
@@ -491,12 +509,12 @@ open class AnkiDroidApp : Application() {
     }
 
     private class FragmentLifecycleLogger(
-        private val activity: Activity
+        private val activity: Activity,
     ) : FragmentManager.FragmentLifecycleCallbacks() {
         override fun onFragmentAttached(
             fm: FragmentManager,
             f: Fragment,
-            context: Context
+            context: Context,
         ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onAttach")
         }
@@ -504,7 +522,7 @@ open class AnkiDroidApp : Application() {
         override fun onFragmentCreated(
             fm: FragmentManager,
             f: Fragment,
-            savedInstanceState: Bundle?
+            savedInstanceState: Bundle?,
         ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onCreate")
         }
@@ -513,44 +531,65 @@ open class AnkiDroidApp : Application() {
             fm: FragmentManager,
             f: Fragment,
             v: View,
-            savedInstanceState: Bundle?
+            savedInstanceState: Bundle?,
         ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onViewCreated")
         }
 
-        override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentStarted(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onStart")
         }
 
-        override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentResumed(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onResume")
         }
 
-        override fun onFragmentPaused(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentPaused(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onPause")
         }
 
-        override fun onFragmentStopped(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentStopped(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onStop")
         }
 
         override fun onFragmentSaveInstanceState(
             fm: FragmentManager,
             f: Fragment,
-            outState: Bundle
+            outState: Bundle,
         ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onSaveInstanceState")
         }
 
-        override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentViewDestroyed(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onViewDestroyed")
         }
 
-        override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentDestroyed(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onDestroy")
         }
 
-        override fun onFragmentDetached(fm: FragmentManager, f: Fragment) {
+        override fun onFragmentDetached(
+            fm: FragmentManager,
+            f: Fragment,
+        ) {
             Timber.i("${activity::class.simpleName}::${f::class.simpleName}::onDetach")
         }
     }

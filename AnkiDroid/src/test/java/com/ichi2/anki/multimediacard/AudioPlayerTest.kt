@@ -139,7 +139,7 @@ class AudioPlayerTest : RobolectricTest() {
                 advanceRobolectricLooper()
             } catch (e: IOException) {
                 assert(
-                    false // shouldn't have an IOException
+                    false, // shouldn't have an IOException
                 )
             }
         }

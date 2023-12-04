@@ -261,16 +261,17 @@ abstract class AbstractFlashcardViewer :
     private val mStartLongClickAction = Runnable { mGestureProcessor.onLongTap() }
 
     // Handler for the "show answer" button
-    private val mFlipCardListener = View.OnClickListener {
-        Timber.i("AbstractFlashcardViewer:: Show answer button pressed")
-        // Ignore what is most likely an accidental double-tap.
-        if (elapsedRealTime - lastClickTime < mDoubleTapTimeInterval) {
-            return@OnClickListener
+    private val mFlipCardListener =
+        View.OnClickListener {
+            Timber.i("AbstractFlashcardViewer:: Show answer button pressed")
+            // Ignore what is most likely an accidental double-tap.
+            if (elapsedRealTime - lastClickTime < mDoubleTapTimeInterval) {
+                return@OnClickListener
+            }
+            lastClickTime = elapsedRealTime
+            automaticAnswer.onShowAnswer()
+            displayCardAnswer()
         }
-        lastClickTime = elapsedRealTime
-        automaticAnswer.onShowAnswer()
-        displayCardAnswer()
-    }
 
     private val migrationService by migrationServiceWhileStartedOrNull()
 
@@ -281,6 +282,7 @@ abstract class AbstractFlashcardViewer :
      * @see refreshIfRequired
      */
     private var refreshRequired: ViewerRefresh? = null
+
     init {
         ChangeManager.subscribe(this)
     }
@@ -291,7 +293,11 @@ abstract class AbstractFlashcardViewer :
         private var mHasBeenTouched = false
         private var mTouchX = 0f
         private var mTouchY = 0f
-        override fun onTouch(view: View, event: MotionEvent): Boolean {
+
+        override fun onTouch(
+            view: View,
+            event: MotionEvent,
+        ): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 // Save states when button pressed
                 mPrevCard = currentCard
@@ -360,20 +366,21 @@ abstract class AbstractFlashcardViewer :
     @get:VisibleForTesting
     protected open val elapsedRealTime: Long
         get() = SystemClock.elapsedRealtime()
-    private val mGestureListener = OnTouchListener { _, event ->
-        if (gestureDetector!!.onTouchEvent(event)) {
-            return@OnTouchListener true
+    private val mGestureListener =
+        OnTouchListener { _, event ->
+            if (gestureDetector!!.onTouchEvent(event)) {
+                return@OnTouchListener true
+            }
+            if (!mGestureDetectorImpl.eventCanBeSentToWebView(event)) {
+                return@OnTouchListener false
+            }
+            // Gesture listener is added before mCard is set
+            processCardAction { cardWebView: WebView? ->
+                if (cardWebView == null) return@processCardAction
+                cardWebView.dispatchTouchEvent(event)
+            }
+            false
         }
-        if (!mGestureDetectorImpl.eventCanBeSentToWebView(event)) {
-            return@OnTouchListener false
-        }
-        // Gesture listener is added before mCard is set
-        processCardAction { cardWebView: WebView? ->
-            if (cardWebView == null) return@processCardAction
-            cardWebView.dispatchTouchEvent(event)
-        }
-        false
-    }
 
     // This is intentionally package-private as it removes the need for synthetic accessors
     @SuppressLint("CheckResult")
@@ -445,11 +452,12 @@ abstract class AbstractFlashcardViewer :
     open suspend fun updateCurrentCard() {
         // Legacy tests assume the current card will be grabbed from the collection,
         // despite that making no sense outside of Reviewer.kt
-        currentCard = withCol {
-            sched.card?.apply {
-                renderOutput()
+        currentCard =
+            withCol {
+                sched.card?.apply {
+                    renderOutput()
+                }
             }
-        }
     }
 
     internal suspend fun updateCardAndRedraw() {
@@ -493,10 +501,11 @@ abstract class AbstractFlashcardViewer :
 
         setContentView(getContentViewAttr(fullscreenMode))
 
-        asyncCreateJob = launchCatchingTask {
-            val mediaDir = withCol { media.dir }
-            server = ReviewerServer(this@AbstractFlashcardViewer, mediaDir).apply { start() }
-        }
+        asyncCreateJob =
+            launchCatchingTask {
+                val mediaDir = withCol { media.dir }
+                server = ReviewerServer(this@AbstractFlashcardViewer, mediaDir).apply { start() }
+            }
 
         // Make ACTION_PROCESS_TEXT for in-app searching possible on > Android 4.0
         delegate.isHandleNativeActionModesEnabled = true
@@ -525,27 +534,29 @@ abstract class AbstractFlashcardViewer :
     public override fun onCollectionLoaded(col: Collection) {
         super.onCollectionLoaded(col)
         val mediaDir = col.media.dir
-        mBaseUrl = getBaseUrl(mediaDir).also { baseUrl ->
-            mSoundPlayer = Sound(baseUrl)
-            mViewerUrl = baseUrl + "__viewer__.html"
-        }
-        mAssetLoader = WebViewAssetLoader.Builder()
-            .addPathHandler("/") { path: String ->
-                try {
-                    val file = File(mediaDir, path)
-                    val inputStream = FileInputStream(file)
-                    val mimeType = guessMimeType(path)
-                    val headers = HashMap<String, String>()
-                    headers["Access-Control-Allow-Origin"] = "*"
-                    val response = WebResourceResponse(mimeType, null, inputStream)
-                    response.responseHeaders = headers
-                    return@addPathHandler response
-                } catch (e: Exception) {
-                    Timber.w(e, "Error trying to open path in asset loader")
-                }
-                null
+        mBaseUrl =
+            getBaseUrl(mediaDir).also { baseUrl ->
+                mSoundPlayer = Sound(baseUrl)
+                mViewerUrl = baseUrl + "__viewer__.html"
             }
-            .build()
+        mAssetLoader =
+            WebViewAssetLoader.Builder()
+                .addPathHandler("/") { path: String ->
+                    try {
+                        val file = File(mediaDir, path)
+                        val inputStream = FileInputStream(file)
+                        val mimeType = guessMimeType(path)
+                        val headers = HashMap<String, String>()
+                        headers["Access-Control-Allow-Origin"] = "*"
+                        val response = WebResourceResponse(mimeType, null, inputStream)
+                        response.responseHeaders = headers
+                        return@addPathHandler response
+                    } catch (e: Exception) {
+                        Timber.w(e, "Error trying to open path in asset loader")
+                    }
+                    null
+                }
+                .build()
         registerExternalStorageListener()
         restoreCollectionPreferences(col)
         initLayout()
@@ -646,7 +657,10 @@ abstract class AbstractFlashcardViewer :
         }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
         if (processCardFunction { cardWebView: WebView? -> processHardwareButtonScroll(keyCode, cardWebView) }) {
             return true
         }
@@ -665,7 +679,10 @@ abstract class AbstractFlashcardViewer :
 
     public override val currentCardId: CardId? get() = currentCard?.id
 
-    private fun processHardwareButtonScroll(keyCode: Int, card: WebView?): Boolean {
+    private fun processHardwareButtonScroll(
+        keyCode: Int,
+        card: WebView?,
+    ): Boolean {
         if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
             card!!.pageUp(false)
             if (mDoubleScrolling) {
@@ -702,13 +719,18 @@ abstract class AbstractFlashcardViewer :
         return text ?: ""
     }
 
-    val deckOptionsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
-        Timber.i("Returned from deck options -> Restarting activity")
-        performReload()
-    }
+    val deckOptionsLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+            Timber.i("Returned from deck options -> Restarting activity")
+            performReload()
+        }
 
     // super.onActivityResult
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    public override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == DeckPicker.RESULT_DB_ERROR) {
             closeReviewer(DeckPicker.RESULT_DB_ERROR)
@@ -782,13 +804,17 @@ abstract class AbstractFlashcardViewer :
      */
     private fun registerExternalStorageListener() {
         if (mUnmountReceiver == null) {
-            mUnmountReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    if (intent.action == SdCardReceiver.MEDIA_EJECT) {
-                        finish()
+            mUnmountReceiver =
+                object : BroadcastReceiver() {
+                    override fun onReceive(
+                        context: Context,
+                        intent: Intent,
+                    ) {
+                        if (intent.action == SdCardReceiver.MEDIA_EJECT) {
+                            finish()
+                        }
                     }
                 }
-            }
             val iFilter = IntentFilter()
             iFilter.addAction(SdCardReceiver.MEDIA_EJECT)
             registerReceiver(mUnmountReceiver, iFilter)
@@ -829,15 +855,16 @@ abstract class AbstractFlashcardViewer :
             title(R.string.delete_card_title)
             setIcon(R.drawable.ic_warning)
             message(
-                text = resources.getString(
-                    R.string.delete_note_message,
-                    Utils.stripHTML(currentCard!!.question(true))
-                )
+                text =
+                    resources.getString(
+                        R.string.delete_note_message,
+                        Utils.stripHTML(currentCard!!.question(true)),
+                    ),
             )
             positiveButton(R.string.dialog_positive_delete) {
                 Timber.i(
                     "AbstractFlashcardViewer:: OK button pressed to delete note %d",
-                    currentCard!!.nid
+                    currentCard!!.nid,
                 )
                 mSoundPlayer.stopSounds()
                 deleteNoteWithoutConfirmation()
@@ -850,11 +877,12 @@ abstract class AbstractFlashcardViewer :
     private fun deleteNoteWithoutConfirmation() {
         val cardId = currentCard!!.id
         launchCatchingTask {
-            val noteCount = withProgress() {
-                undoableOp {
-                    removeNotes(cids = listOf(cardId))
-                }.count
-            }
+            val noteCount =
+                withProgress {
+                    undoableOp {
+                        removeNotes(cids = listOf(cardId))
+                    }.count
+                }
             val deletedMessage = resources.getQuantityString(R.plurals.card_browser_cards_deleted, noteCount, noteCount)
             showSnackbar(deletedMessage, Snackbar.LENGTH_LONG) {
                 setAction(R.string.undo) { launchCatchingTask { undoAndShowSnackbar() } }
@@ -862,7 +890,9 @@ abstract class AbstractFlashcardViewer :
         }
     }
 
-    open fun answerCard(@BUTTON_TYPE ease: Int) {
+    open fun answerCard(
+        @BUTTON_TYPE ease: Int,
+    ) {
         launchCatchingTask {
             if (mInAnswer) {
                 return@launchCatchingTask
@@ -882,7 +912,9 @@ abstract class AbstractFlashcardViewer :
         }
     }
 
-    open suspend fun answerCardInner(@BUTTON_TYPE ease: Int) {
+    open suspend fun answerCardInner(
+        @BUTTON_TYPE ease: Int,
+    ) {
         // Legacy tests assume they can call answerCard() even outside of Reviewer
         withCol {
             sched.answerCard(currentCard!!, ease)
@@ -902,30 +934,34 @@ abstract class AbstractFlashcardViewer :
         // Initialize swipe
         gestureDetector = GestureDetector(this, mGestureDetectorImpl)
         easeButtonsLayout = findViewById(R.id.ease_buttons)
-        easeButton1 = EaseButton(
-            EASE_1,
-            findViewById(R.id.flashcard_layout_ease1),
-            findViewById(R.id.ease1),
-            findViewById(R.id.nextTime1)
-        ).apply { setListeners(mEaseHandler) }
-        easeButton2 = EaseButton(
-            EASE_2,
-            findViewById(R.id.flashcard_layout_ease2),
-            findViewById(R.id.ease2),
-            findViewById(R.id.nextTime2)
-        ).apply { setListeners(mEaseHandler) }
-        easeButton3 = EaseButton(
-            EASE_3,
-            findViewById(R.id.flashcard_layout_ease3),
-            findViewById(R.id.ease3),
-            findViewById(R.id.nextTime3)
-        ).apply { setListeners(mEaseHandler) }
-        easeButton4 = EaseButton(
-            EASE_4,
-            findViewById(R.id.flashcard_layout_ease4),
-            findViewById(R.id.ease4),
-            findViewById(R.id.nextTime4)
-        ).apply { setListeners(mEaseHandler) }
+        easeButton1 =
+            EaseButton(
+                EASE_1,
+                findViewById(R.id.flashcard_layout_ease1),
+                findViewById(R.id.ease1),
+                findViewById(R.id.nextTime1),
+            ).apply { setListeners(mEaseHandler) }
+        easeButton2 =
+            EaseButton(
+                EASE_2,
+                findViewById(R.id.flashcard_layout_ease2),
+                findViewById(R.id.ease2),
+                findViewById(R.id.nextTime2),
+            ).apply { setListeners(mEaseHandler) }
+        easeButton3 =
+            EaseButton(
+                EASE_3,
+                findViewById(R.id.flashcard_layout_ease3),
+                findViewById(R.id.ease3),
+                findViewById(R.id.nextTime3),
+            ).apply { setListeners(mEaseHandler) }
+        easeButton4 =
+            EaseButton(
+                EASE_4,
+                findViewById(R.id.flashcard_layout_ease4),
+                findViewById(R.id.ease4),
+                findViewById(R.id.nextTime4),
+            ).apply { setListeners(mEaseHandler) }
         if (!mShowNextReviewTime) {
             easeButton1!!.hideNextReviewTime()
             easeButton2!!.hideNextReviewTime()
@@ -976,10 +1012,11 @@ abstract class AbstractFlashcardViewer :
         initControls()
 
         // Position answer buttons
-        val answerButtonsPosition = this.sharedPrefs().getString(
-            getString(R.string.answer_buttons_position_preference),
-            "bottom"
-        )
+        val answerButtonsPosition =
+            this.sharedPrefs().getString(
+                getString(R.string.answer_buttons_position_preference),
+                "bottom",
+            )
         mAnswerButtonsPosition = answerButtonsPosition
         val answerArea = findViewById<LinearLayout>(R.id.bottom_area_layout)
         val answerAreaParams = answerArea.layoutParams as RelativeLayout.LayoutParams
@@ -999,7 +1036,8 @@ abstract class AbstractFlashcardViewer :
             }
 
             "bottom",
-            "none" -> {
+            "none",
+            -> {
                 whiteboardContainerParams.addRule(RelativeLayout.ABOVE, R.id.bottom_area_layout)
                 whiteboardContainerParams.addRule(RelativeLayout.BELOW, R.id.mic_tool_bar_layer)
                 flashcardContainerParams.addRule(RelativeLayout.ABOVE, R.id.bottom_area_layout)
@@ -1084,7 +1122,9 @@ abstract class AbstractFlashcardViewer :
         processCardAction { cardWebView: WebView? -> cardWebView!!.loadUrl(url) }
     }
 
-    private fun <T : View?> inflateNewView(@IdRes id: Int): T {
+    private fun <T : View?> inflateNewView(
+        @IdRes id: Int,
+    ): T {
         val layoutId = getContentViewAttr(fullscreenMode)
         val content = LayoutInflater.from(this@AbstractFlashcardViewer).inflate(layoutId, null, false) as ViewGroup
         val ret: T = content.findViewById(id)
@@ -1222,9 +1262,10 @@ abstract class AbstractFlashcardViewer :
         if (mGesturesEnabled) {
             mGestureProcessor.init(preferences)
         }
-        if (preferences.getBoolean("timeoutAnswer", false) || preferences.getBoolean(
+        if (preferences.getBoolean("timeoutAnswer", false) ||
+            preferences.getBoolean(
                 "keepScreenOn",
-                false
+                false,
             )
         ) {
             this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1392,17 +1433,22 @@ abstract class AbstractFlashcardViewer :
         }
     }
 
-    override fun tapOnCurrentCard(x: Int, y: Int) {
+    override fun tapOnCurrentCard(
+        x: Int,
+        y: Int,
+    ) {
         // assemble suitable ACTION_DOWN and ACTION_UP events and forward them to the card's handler
-        val eDown = MotionEvent.obtain(
-            SystemClock.uptimeMillis(),
-            SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, x.toFloat(), y.toFloat(), 1f, 1f, 0, 1f, 1f, 0, 0
-        )
+        val eDown =
+            MotionEvent.obtain(
+                SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, x.toFloat(), y.toFloat(), 1f, 1f, 0, 1f, 1f, 0, 0,
+            )
         processCardAction { cardWebView: WebView? -> cardWebView!!.dispatchTouchEvent(eDown) }
-        val eUp = MotionEvent.obtain(
-            eDown.downTime,
-            SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x.toFloat(), y.toFloat(), 1f, 1f, 0, 1f, 1f, 0, 0
-        )
+        val eUp =
+            MotionEvent.obtain(
+                eDown.downTime,
+                SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x.toFloat(), y.toFloat(), 1f, 1f, 0, 1f, 1f, 0, 0,
+            )
         processCardAction { cardWebView: WebView? -> cardWebView!!.dispatchTouchEvent(eUp) }
     }
 
@@ -1442,8 +1488,8 @@ abstract class AbstractFlashcardViewer :
                 FileOutputStream(
                     File(
                         CollectionHelper.getCurrentAnkiDroidDirectory(this),
-                        "card.html"
-                    )
+                        "card.html",
+                    ),
                 ).use { f -> f.write(cardContent!!.toByteArray()) }
             } catch (e: IOException) {
                 Timber.d(e, "failed to save card")
@@ -1453,10 +1499,11 @@ abstract class AbstractFlashcardViewer :
         playSounds(false) // Play sounds if appropriate
     }
 
-    private fun currentSideHasSounds(): Boolean = when (displayAnswer) {
-        false -> mSoundPlayer.hasQuestion()
-        true -> mSoundPlayer.hasAnswer()
-    }
+    private fun currentSideHasSounds(): Boolean =
+        when (displayAnswer) {
+            false -> mSoundPlayer.hasQuestion()
+            true -> mSoundPlayer.hasAnswer()
+        }
 
     /**
      * Plays sounds (or TTS, if configured) for currently shown side of card.
@@ -1519,39 +1566,42 @@ abstract class AbstractFlashcardViewer :
     }
 
     private val soundErrorListener: Sound.OnErrorListener
-        get() = object : Sound.OnErrorListener {
-            private var handledError: HashSet<String> = hashSetOf()
+        get() =
+            object : Sound.OnErrorListener {
+                private var handledError: HashSet<String> = hashSetOf()
 
-            override fun onError(
-                mp: MediaPlayer?,
-                which: Int,
-                extra: Int,
-                path: String?
-            ): ErrorHandling {
-                Timber.w("Media Error: (%d, %d). Calling OnCompletionListener", which, extra)
-                try {
-                    val file = Uri.parse(path).toFile()
-                    if (!file.exists()) {
-                        if (handleStorageMigrationError(file)) {
-                            return ErrorHandling.RETRY_AUDIO
+                override fun onError(
+                    mp: MediaPlayer?,
+                    which: Int,
+                    extra: Int,
+                    path: String?,
+                ): ErrorHandling {
+                    Timber.w("Media Error: (%d, %d). Calling OnCompletionListener", which, extra)
+                    try {
+                        val file = Uri.parse(path).toFile()
+                        if (!file.exists()) {
+                            if (handleStorageMigrationError(file)) {
+                                return ErrorHandling.RETRY_AUDIO
+                            }
+                            mMissingImageHandler.processMissingSound(
+                                file,
+                            ) { filename: String? -> displayCouldNotFindMediaSnackbar(filename) }
                         }
-                        mMissingImageHandler.processMissingSound(file) { filename: String? -> displayCouldNotFindMediaSnackbar(filename) }
+                    } catch (e: Exception) {
+                        Timber.w(e)
                     }
-                } catch (e: Exception) {
-                    Timber.w(e)
+                    return ErrorHandling.CONTINUE_AUDIO
                 }
-                return ErrorHandling.CONTINUE_AUDIO
-            }
 
-            private fun handleStorageMigrationError(file: File): Boolean {
-                val migrationService = migrationService ?: return false
-                if (handledError.contains(file.absolutePath)) {
-                    return false
+                private fun handleStorageMigrationError(file: File): Boolean {
+                    val migrationService = migrationService ?: return false
+                    if (handledError.contains(file.absolutePath)) {
+                        return false
+                    }
+                    handledError.add(file.absolutePath)
+                    return migrationService.migrateFileImmediately(file)
                 }
-                handledError.add(file.absolutePath)
-                return migrationService.migrateFileImmediately(file)
             }
-        }
 
     /**
      * Shows the dialogue for selecting TTS for the current card and cardside.
@@ -1577,7 +1627,10 @@ abstract class AbstractFlashcardViewer :
         }
     }
 
-    private fun loadContentIntoCard(card: WebView?, content: String) {
+    private fun loadContentIntoCard(
+        card: WebView?,
+        content: String,
+    ) {
         launchCatchingTask {
             asyncCreateJob?.join()
             server?.reviewerHtml = content
@@ -1610,11 +1663,12 @@ abstract class AbstractFlashcardViewer :
      */
     @VisibleForTesting
     protected open fun blockControls(quick: Boolean) {
-        controlBlocked = if (quick) {
-            ControlBlock.QUICK
-        } else {
-            ControlBlock.SLOW
-        }
+        controlBlocked =
+            if (quick) {
+                ControlBlock.QUICK
+            } else {
+                ControlBlock.SLOW
+            }
         mCardFrame!!.isEnabled = false
         flipCardLayout!!.isEnabled = false
         mTouchLayer!!.visibility = View.INVISIBLE
@@ -1659,11 +1713,12 @@ abstract class AbstractFlashcardViewer :
     @VisibleForTesting
     open fun suspendNote(): Boolean {
         launchCatchingTask {
-            val changed = withProgress {
-                undoableOp {
-                    sched.suspendNotes(listOf(currentCard!!.nid))
+            val changed =
+                withProgress {
+                    undoableOp {
+                        sched.suspendNotes(listOf(currentCard!!.nid))
+                    }
                 }
-            }
             val count = changed.count
             val noteSuspended = resources.getQuantityString(R.plurals.note_suspended, count, count)
             mSoundPlayer.stopSounds()
@@ -1675,18 +1730,22 @@ abstract class AbstractFlashcardViewer :
     @VisibleForTesting
     open fun buryNote(): Boolean {
         launchCatchingTask {
-            val changed = withProgress {
-                undoableOp {
-                    sched.buryNotes(listOf(currentCard!!.nid))
+            val changed =
+                withProgress {
+                    undoableOp {
+                        sched.buryNotes(listOf(currentCard!!.nid))
+                    }
                 }
-            }
             mSoundPlayer.stopSounds()
             showSnackbar(TR.studyingCardsBuried(changed.count), Reviewer.ACTION_SNACKBAR_TIME)
         }
         return true
     }
 
-    override fun executeCommand(which: ViewerCommand, fromGesture: Gesture?): Boolean {
+    override fun executeCommand(
+        which: ViewerCommand,
+        fromGesture: Gesture?,
+    ): Boolean {
         return if (isControlBlocked && which !== ViewerCommand.EXIT) {
             false
         } else {
@@ -1855,11 +1914,17 @@ abstract class AbstractFlashcardViewer :
     // ----------------------------------------------------------------------------
     // INNER CLASSES
     // ----------------------------------------------------------------------------
+
     /**
      * Provides a hook for calling "alert" from javascript. Useful for debugging your javascript.
      */
     class AnkiDroidWebChromeClient : WebChromeClient() {
-        override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
+        override fun onJsAlert(
+            view: WebView,
+            url: String,
+            message: String,
+            result: JsResult,
+        ): Boolean {
             Timber.i("AbstractFlashcardViewer:: onJsAlert: %s", message)
             result.confirm()
             return true
@@ -1880,7 +1945,13 @@ abstract class AbstractFlashcardViewer :
 
     /** Fixing bug 720: <input></input> focus, thanks to pablomouzo on android issue 7189  */
     internal inner class MyWebView(context: Context?) : WebView(context!!) {
-        override fun loadDataWithBaseURL(baseUrl: String?, data: String, mimeType: String?, encoding: String?, historyUrl: String?) {
+        override fun loadDataWithBaseURL(
+            baseUrl: String?,
+            data: String,
+            mimeType: String?,
+            encoding: String?,
+            historyUrl: String?,
+        ) {
             if (!this@AbstractFlashcardViewer.isDestroyed) {
                 super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl)
             } else {
@@ -1888,7 +1959,12 @@ abstract class AbstractFlashcardViewer :
             }
         }
 
-        override fun onScrollChanged(horiz: Int, vert: Int, oldHoriz: Int, oldVert: Int) {
+        override fun onScrollChanged(
+            horiz: Int,
+            vert: Int,
+            oldHoriz: Int,
+            oldVert: Int,
+        ) {
             super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
             if (abs(horiz - oldHoriz) > abs(vert - oldVert)) {
                 mIsXScrolling = true
@@ -1909,7 +1985,12 @@ abstract class AbstractFlashcardViewer :
             return super.onTouchEvent(event)
         }
 
-        override fun onOverScrolled(scrollX: Int, scrollY: Int, clampedX: Boolean, clampedY: Boolean) {
+        override fun onOverScrolled(
+            scrollX: Int,
+            scrollY: Int,
+            clampedX: Boolean,
+            clampedY: Boolean,
+        ) {
             if (clampedX) {
                 val scrollParent = findScrollParent(this)
                 scrollParent?.requestDisallowInterceptTouchEvent(false)
@@ -1933,7 +2014,12 @@ abstract class AbstractFlashcardViewer :
     }
 
     internal open inner class MyGestureDetector : SimpleOnGestureListener() {
-        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float,
+        ): Boolean {
             Timber.d("onFling")
 
             // #5741 - A swipe from the top caused delayedHide to be triggered,
@@ -2026,6 +2112,7 @@ abstract class AbstractFlashcardViewer :
 
         /** A list of events we sent to the WebView (to block double-processing)  */
         private val mDispatchedTouchEvents = hashSetInit<MotionEvent>(2)
+
         override fun onFillFlashcard() {
             Timber.d("Removing pending touch events for gestures")
             mDesiredTouchEvents.clear()
@@ -2070,12 +2157,13 @@ abstract class AbstractFlashcardViewer :
                     return@setOnTouchListener true
                 }
                 val cardWebView = webViewAsView as WebView
-                val result: HitTestResult = try {
-                    cardWebView.hitTestResult
-                } catch (e: Exception) {
-                    Timber.w(e, "Cannot obtain HitTest result")
-                    return@setOnTouchListener true
-                }
+                val result: HitTestResult =
+                    try {
+                        cardWebView.hitTestResult
+                    } catch (e: Exception) {
+                        Timber.w(e, "Cannot obtain HitTest result")
+                        return@setOnTouchListener true
+                    }
                 if (isLinkClick(result)) {
                     Timber.v("Detected link click - ignoring gesture dispatch")
                     return@setOnTouchListener true
@@ -2094,7 +2182,7 @@ abstract class AbstractFlashcardViewer :
             return (
                 type == HitTestResult.SRC_ANCHOR_TYPE ||
                     type == HitTestResult.SRC_IMAGE_ANCHOR_TYPE
-                )
+            )
         }
     }
 
@@ -2115,11 +2203,12 @@ abstract class AbstractFlashcardViewer :
     open var currentCard: Card? = null
         set(card) {
             field = card
-            mCardSoundConfig = if (card == null) {
-                null
-            } else {
-                create(getColUnsafe, card)
-            }
+            mCardSoundConfig =
+                if (card == null) {
+                    null
+                } else {
+                    create(getColUnsafe, card)
+                }
         }
 
     /** Refreshes the WebView after a crash  */
@@ -2163,6 +2252,7 @@ abstract class AbstractFlashcardViewer :
         const val ANSWER_ORDINAL_2 = 6
         const val ANSWER_ORDINAL_3 = 7
         const val ANSWER_ORDINAL_4 = 8
+
         fun getSignalFromUrl(url: String): Int {
             when (url) {
                 "signal:typefocus" -> return TYPE_FOCUS
@@ -2184,19 +2274,25 @@ abstract class AbstractFlashcardViewer :
 
     protected inner class CardViewerWebClient internal constructor(
         private val loader: WebViewAssetLoader?,
-        private val onPageFinishedCallback: OnPageFinishedCallback? = null
+        private val onPageFinishedCallback: OnPageFinishedCallback? = null,
     ) : WebViewClient() {
         private var pageFinishedFired = true
 
         @TargetApi(Build.VERSION_CODES.N)
-        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+        override fun shouldOverrideUrlLoading(
+            view: WebView,
+            request: WebResourceRequest,
+        ): Boolean {
             val url = request.url.toString()
             Timber.d("Obtained URL from card: '%s'", url)
             return filterUrl(url)
         }
 
         // required for lower APIs (I think)
-        override fun shouldInterceptRequest(view: WebView, url: String): WebResourceResponse? {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            url: String,
+        ): WebResourceResponse? {
             // response is null if nothing required
             if (isLoadedFromProtocolRelativeUrl(url)) {
                 mMissingImageHandler.processInefficientImage { displayMediaUpgradeRequiredSnackbar() }
@@ -2204,12 +2300,19 @@ abstract class AbstractFlashcardViewer :
             return null
         }
 
-        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        override fun onPageStarted(
+            view: WebView?,
+            url: String?,
+            favicon: Bitmap?,
+        ) {
             pageFinishedFired = false
         }
 
         @TargetApi(Build.VERSION_CODES.N)
-        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: WebResourceRequest,
+        ): WebResourceResponse? {
             val url = request.url
             val result = loader!!.shouldInterceptRequest(url)
             if (result != null) {
@@ -2230,17 +2333,28 @@ abstract class AbstractFlashcardViewer :
             return url.startsWith("file://") && !url.startsWith("file:///")
         }
 
-        override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+        override fun onReceivedError(
+            view: WebView,
+            request: WebResourceRequest,
+            error: WebResourceError,
+        ) {
             super.onReceivedError(view, request, error)
             mMissingImageHandler.processFailure(request) { filename: String? -> displayCouldNotFindMediaSnackbar(filename) }
         }
 
-        override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, errorResponse: WebResourceResponse) {
+        override fun onReceivedHttpError(
+            view: WebView,
+            request: WebResourceRequest,
+            errorResponse: WebResourceResponse,
+        ) {
             super.onReceivedHttpError(view, request, errorResponse)
             mMissingImageHandler.processFailure(request) { filename: String? -> displayCouldNotFindMediaSnackbar(filename) }
         }
 
-        override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+        override fun shouldOverrideUrlLoading(
+            view: WebView,
+            url: String,
+        ): Boolean {
             return filterUrl(url)
         }
 
@@ -2414,10 +2528,11 @@ abstract class AbstractFlashcardViewer :
                             intent = null
                         } else {
                             Timber.d("Resolving intent uri to market uri because not available: %s", intent)
-                            intent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("market://details?id=$packageName")
-                            )
+                            intent =
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("market://details?id=$packageName"),
+                                )
                             if (packageManager.resolveActivityCompat(intent, ResolveInfoFlagsCompat.EMPTY) == null) {
                                 intent = null
                             }
@@ -2452,15 +2567,17 @@ abstract class AbstractFlashcardViewer :
         @NeedsTest("14221: 'playsound' should play the sound from the start")
         @BlocksSchemaUpgrade("handle TTS tags")
         private suspend fun controlSound(url: String) {
-            val filename = when (val tag = currentCard?.let { getAvTag(it, url) }) {
-                is SoundOrVideoTag -> tag.filename
-                // not currently supported
-                is TTSTag -> null
-                else -> null
-            }
-            val replacedUrl = filename?.let {
-                Sound.getSoundPath(mBaseUrl!!, it)
-            } ?: return
+            val filename =
+                when (val tag = currentCard?.let { getAvTag(it, url) }) {
+                    is SoundOrVideoTag -> tag.filename
+                    // not currently supported
+                    is TTSTag -> null
+                    else -> null
+                }
+            val replacedUrl =
+                filename?.let {
+                    Sound.getSoundPath(mBaseUrl!!, it)
+                } ?: return
             mSoundPlayer.playSound(replacedUrl, null, soundErrorListener)
         }
 
@@ -2477,7 +2594,10 @@ abstract class AbstractFlashcardViewer :
         }
 
         // Run any post-load events in javascript that rely on the window being completely loaded.
-        override fun onPageFinished(view: WebView, url: String) {
+        override fun onPageFinished(
+            view: WebView,
+            url: String,
+        ) {
             if (pageFinishedFired) {
                 return
             }
@@ -2489,7 +2609,10 @@ abstract class AbstractFlashcardViewer :
         }
 
         @TargetApi(Build.VERSION_CODES.O)
-        override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+        override fun onRenderProcessGone(
+            view: WebView,
+            detail: RenderProcessGoneDetail,
+        ): Boolean {
             return mOnRenderProcessGoneDelegate.onRenderProcessGone(view, detail)
         }
     }
@@ -2514,8 +2637,9 @@ abstract class AbstractFlashcardViewer :
     fun handleUrlFromJavascript(url: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // WebViewCompat recommended here, but I'll avoid the dependency as it's test code
-            val c = webView?.webViewClient as? CardViewerWebClient?
-                ?: throw IllegalStateException("Couldn't obtain WebView - maybe it wasn't created yet")
+            val c =
+                webView?.webViewClient as? CardViewerWebClient?
+                    ?: throw IllegalStateException("Couldn't obtain WebView - maybe it wasn't created yet")
             c.filterUrl(url)
         } else {
             throw IllegalStateException("Can't get WebViewClient due to Android API")
@@ -2544,7 +2668,11 @@ abstract class AbstractFlashcardViewer :
         showDialogFragment(dialog)
     }
 
-    override fun onSelectedTags(selectedTags: List<String>, indeterminateTags: List<String>, stateFilter: CardStateFilter) {
+    override fun onSelectedTags(
+        selectedTags: List<String>,
+        indeterminateTags: List<String>,
+        stateFilter: CardStateFilter,
+    ) {
         if (currentCard!!.note().tags != selectedTags) {
             val tagString = selectedTags.joinToString(" ")
             val note = currentCard!!.note()
@@ -2559,7 +2687,10 @@ abstract class AbstractFlashcardViewer :
         return AnkiDroidJsAPI(this)
     }
 
-    override fun opExecuted(changes: OpChanges, handler: Any?) {
+    override fun opExecuted(
+        changes: OpChanges,
+        handler: Any?,
+    ) {
         if (handler === this) return
         refreshRequired = ViewerRefresh.updateState(refreshRequired, changes)
         refreshIfRequired()

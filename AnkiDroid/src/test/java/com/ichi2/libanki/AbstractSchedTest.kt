@@ -79,7 +79,7 @@ class AbstractSchedTest : JvmTest() {
         assertNotNull(card)
         assertEquals(
             Counts(0, 1, 0),
-            sched.counts()
+            sched.counts(),
         )
 
         sched.answerCard(card, 3)
@@ -88,14 +88,14 @@ class AbstractSchedTest : JvmTest() {
         assertNotNull(card)
         assertEquals(
             Counts(0, 1, 0),
-            sched.counts()
+            sched.counts(),
         )
 
         assertNotNull(card)
 
         assertEquals(
             Counts(0, 1, 0),
-            sched.counts()
+            sched.counts(),
         )
 
         card = sched.card!!
@@ -104,7 +104,7 @@ class AbstractSchedTest : JvmTest() {
         assertNotNull(card)
         assertEquals(
             Counts(0, 1, 0),
-            sched.counts()
+            sched.counts(),
         )
         assertNotNull(card)
     }

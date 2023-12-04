@@ -25,6 +25,7 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
 import org.junit.Test
 import org.junit.runner.RunWith
+
 @RunWith(AndroidJUnit4::class)
 class PeripheralKeymapTest {
     @Test
@@ -38,16 +39,16 @@ class PeripheralKeymapTest {
 
         peripheralKeymap.onKeyDown(
             KeyEvent.KEYCODE_NUMPAD_1,
-            getNumpadEvent(KeyEvent.KEYCODE_NUMPAD_1)
+            getNumpadEvent(KeyEvent.KEYCODE_NUMPAD_1),
         )
         peripheralKeymap.onKeyUp(
             KeyEvent.KEYCODE_NUMPAD_1,
-            getNumpadEvent(KeyEvent.KEYCODE_NUMPAD_1)
+            getNumpadEvent(KeyEvent.KEYCODE_NUMPAD_1),
         )
         assertThat<List<ViewerCommand>>(processed, hasSize(1))
         assertThat(
             processed[0],
-            equalTo(ViewerCommand.FLIP_OR_ANSWER_EASE1)
+            equalTo(ViewerCommand.FLIP_OR_ANSWER_EASE1),
         )
     }
 

@@ -63,7 +63,7 @@ class ReviewerTest : RobolectricTest() {
             scenario.onActivity { reviewer: Reviewer ->
                 assertNotNull(
                     "Collection should be non-null",
-                    reviewer.getColUnsafe
+                    reviewer.getColUnsafe,
                 )
             }
         }
@@ -108,7 +108,7 @@ class ReviewerTest : RobolectricTest() {
         assertThat(
             "No menu items should be visible if all are disabled in Settings - Reviewer - App Bar Buttons",
             visibleButtons,
-            empty()
+            empty(),
         )
     }
 
@@ -125,82 +125,85 @@ class ReviewerTest : RobolectricTest() {
         assertThat(
             "No menu items should be visible if all are disabled in Settings - Reviewer - App Bar Buttons",
             visibleButtons,
-            empty()
+            empty(),
         )
     }
 
     @Test
     @Synchronized
     @Throws(ConfirmModSchemaException::class)
-    fun testMultipleCards() = runTest {
-        addNoteWithThreeCards()
-        val nw = col.decks.confForDid(1).getJSONObject("new")
-        val time = collectionTime
-        nw.put("delays", JSONArray(intArrayOf(1, 10, 60, 120)))
+    fun testMultipleCards() =
+        runTest {
+            addNoteWithThreeCards()
+            val nw = col.decks.confForDid(1).getJSONObject("new")
+            val time = collectionTime
+            nw.put("delays", JSONArray(intArrayOf(1, 10, 60, 120)))
 
-        waitForAsyncTasksToComplete()
+            waitForAsyncTasksToComplete()
 
-        val reviewer = startReviewer()
+            val reviewer = startReviewer()
 
-        waitForAsyncTasksToComplete()
+            waitForAsyncTasksToComplete()
 
-        assertCounts(reviewer, 3, 0, 0)
-        answerCardOrdinalAsGood(reviewer, 1) // card 1 is shown
-        time.addM(3) // card get scheduler in [10, 12.5] minutes
-        // We wait 3 minutes to ensure card 2 is scheduled after card 1
-        answerCardOrdinalAsGood(reviewer, 2) // card 2 is shown
-        time.addM(3) // Same as above
-        answerCardOrdinalAsGood(reviewer, 3) // card 3 is shown
+            assertCounts(reviewer, 3, 0, 0)
+            answerCardOrdinalAsGood(reviewer, 1) // card 1 is shown
+            time.addM(3) // card get scheduler in [10, 12.5] minutes
+            // We wait 3 minutes to ensure card 2 is scheduled after card 1
+            answerCardOrdinalAsGood(reviewer, 2) // card 2 is shown
+            time.addM(3) // Same as above
+            answerCardOrdinalAsGood(reviewer, 3) // card 3 is shown
 
-        undo(reviewer)
-        assertCurrentOrdIs(reviewer, 3)
+            undo(reviewer)
+            assertCurrentOrdIs(reviewer, 3)
 
-        answerCardOrdinalAsGood(reviewer, 3) // card 3 is shown
+            answerCardOrdinalAsGood(reviewer, 3) // card 3 is shown
 
-        assertCurrentOrdIsNot(reviewer, 3) // Anki Desktop shows "1"
-    }
+            assertCurrentOrdIsNot(reviewer, 3) // Anki Desktop shows "1"
+        }
 
     @Test
-    fun testLrnQueueAfterUndo() = runTest {
-        val nw = col.decks.confForDid(1).getJSONObject("new")
-        val time = TimeManager.time as MockTime
-        nw.put("delays", JSONArray(intArrayOf(1, 10, 60, 120)))
+    fun testLrnQueueAfterUndo() =
+        runTest {
+            val nw = col.decks.confForDid(1).getJSONObject("new")
+            val time = TimeManager.time as MockTime
+            nw.put("delays", JSONArray(intArrayOf(1, 10, 60, 120)))
 
-        val cards = arrayOf(
-            addRevNoteUsingBasicModelDueToday("1", "bar").firstCard(),
-            addNoteUsingBasicModel("2", "bar").firstCard(),
-            addNoteUsingBasicModel("3", "bar").firstCard()
-        )
-        waitForAsyncTasksToComplete()
+            val cards =
+                arrayOf(
+                    addRevNoteUsingBasicModelDueToday("1", "bar").firstCard(),
+                    addNoteUsingBasicModel("2", "bar").firstCard(),
+                    addNoteUsingBasicModel("3", "bar").firstCard(),
+                )
+            waitForAsyncTasksToComplete()
 
-        val reviewer = startReviewer()
+            val reviewer = startReviewer()
 
-        waitForAsyncTasksToComplete()
+            waitForAsyncTasksToComplete()
 
-        equalFirstField(cards[0], reviewer.currentCard!!)
-        reviewer.answerCard(Consts.BUTTON_ONE)
-        waitForAsyncTasksToComplete()
+            equalFirstField(cards[0], reviewer.currentCard!!)
+            reviewer.answerCard(Consts.BUTTON_ONE)
+            waitForAsyncTasksToComplete()
 
-        equalFirstField(cards[1], reviewer.currentCard!!)
-        reviewer.answerCard(Consts.BUTTON_ONE)
-        waitForAsyncTasksToComplete()
+            equalFirstField(cards[1], reviewer.currentCard!!)
+            reviewer.answerCard(Consts.BUTTON_ONE)
+            waitForAsyncTasksToComplete()
 
-        undo(reviewer)
-        waitForAsyncTasksToComplete()
+            undo(reviewer)
+            waitForAsyncTasksToComplete()
 
-        equalFirstField(cards[1], reviewer.currentCard!!)
-        reviewer.answerCard(Consts.BUTTON_THREE)
-        waitForAsyncTasksToComplete()
+            equalFirstField(cards[1], reviewer.currentCard!!)
+            reviewer.answerCard(Consts.BUTTON_THREE)
+            waitForAsyncTasksToComplete()
 
-        equalFirstField(cards[2], reviewer.currentCard!!)
-        time.addM(2)
-        reviewer.answerCard(Consts.BUTTON_THREE)
-        advanceRobolectricLooperWithSleep()
-        equalFirstField(
-            cards[0],
-            reviewer.currentCard!!
-        ) // This failed in #6898 because this card was not in the queue
-    }
+            equalFirstField(cards[2], reviewer.currentCard!!)
+            time.addM(2)
+            reviewer.answerCard(Consts.BUTTON_THREE)
+            advanceRobolectricLooperWithSleep()
+            equalFirstField(
+                cards[0],
+                reviewer.currentCard!!,
+            ) // This failed in #6898 because this card was not in the queue
+        }
 
     @Test
     @Flaky(os = OS.WINDOWS, "startReviewer: NullPointerException - baseDeckName")
@@ -244,53 +247,56 @@ class ReviewerTest : RobolectricTest() {
     @Ignore("needs update for v3")
     @Test
     @Throws(InterruptedException::class)
-    fun testUndoResetsCardCountsToCorrectValue() = runTest {
-        val reviewer = startReviewer()
+    fun testUndoResetsCardCountsToCorrectValue() =
+        runTest {
+            val reviewer = startReviewer()
 
-        waitForAsyncTasksToComplete()
+            waitForAsyncTasksToComplete()
 
-        // #6587
-        addNoteUsingBasicModel("Hello", "World")
+            // #6587
+            addNoteUsingBasicModel("Hello", "World")
 
-        val col = col
-        val sched = col.sched
+            val col = col
+            val sched = col.sched
 
-        val cardBeforeUndo = sched.card
-        val countsBeforeUndo = sched.counts()
+            val cardBeforeUndo = sched.card
+            val countsBeforeUndo = sched.counts()
 
-        sched.answerCard(cardBeforeUndo!!, Consts.BUTTON_THREE)
+            sched.answerCard(cardBeforeUndo!!, Consts.BUTTON_THREE)
 
-        reviewer.undoAndShowSnackbar()
+            reviewer.undoAndShowSnackbar()
 
-        val countsAfterUndo = sched.counts()
+            val countsAfterUndo = sched.counts()
 
-        assertThat(
-            "Counts after an undo should be the same as before an undo",
-            countsAfterUndo,
-            `is`(countsBeforeUndo)
-        )
-    }
+            assertThat(
+                "Counts after an undo should be the same as before an undo",
+                countsAfterUndo,
+                `is`(countsBeforeUndo),
+            )
+        }
 
     @Test
-    fun `A card is not flipped after 'mark' Issue 14656`() = runTest {
-        startReviewer(withCards = 1).apply {
-            executeCommand(FLIP_OR_ANSWER_EASE1)
-            assertThat("card is showing answer", isDisplayingAnswer)
-            executeCommand(MARK)
-            assertThat("card is showing answer after mark", isDisplayingAnswer)
+    fun `A card is not flipped after 'mark' Issue 14656`() =
+        runTest {
+            startReviewer(withCards = 1).apply {
+                executeCommand(FLIP_OR_ANSWER_EASE1)
+                assertThat("card is showing answer", isDisplayingAnswer)
+                executeCommand(MARK)
+                assertThat("card is showing answer after mark", isDisplayingAnswer)
+            }
         }
-    }
 
     @Test
-    fun `Marking a card is undone by marking again`() = runTest {
-        startReviewer(withCards = 1).apply {
-            assertThat("card is not marked before action", !isDisplayingMark)
-            executeCommand(MARK)
-            assertThat("card is marked after action", isDisplayingMark)
-            executeCommand(MARK)
-            assertThat("marking a card twice disables the mark", !isDisplayingMark)
+    fun `Marking a card is undone by marking again`() =
+        runTest {
+            startReviewer(withCards = 1).apply {
+                assertThat("card is not marked before action", !isDisplayingMark)
+                executeCommand(MARK)
+                assertThat("card is marked after action", isDisplayingMark)
+                executeCommand(MARK)
+                assertThat("marking a card twice disables the mark", !isDisplayingMark)
+            }
         }
-    }
 
     private fun toggleWhiteboard(reviewer: ReviewerForMenuItems) {
         reviewer.toggleWhiteboard()
@@ -312,7 +318,10 @@ class ReviewerTest : RobolectricTest() {
         }
     }
 
-    private fun assertCurrentOrdIsNot(r: Reviewer, @Suppress("SameParameterValue") i: Int) {
+    private fun assertCurrentOrdIsNot(
+        r: Reviewer,
+        @Suppress("SameParameterValue") i: Int,
+    ) {
         waitForAsyncTasksToComplete()
         val ord = r.currentCard!!.ord
 
@@ -324,27 +333,37 @@ class ReviewerTest : RobolectricTest() {
     }
 
     @Suppress("SameParameterValue")
-    private fun assertCounts(r: Reviewer, newCount: Int, stepCount: Int, revCount: Int) {
+    private fun assertCounts(
+        r: Reviewer,
+        newCount: Int,
+        stepCount: Int,
+        revCount: Int,
+    ) {
         val jsApi = r.javaScriptFunction()
-        val countList = listOf(
-            jsApi.ankiGetNewCardCount(),
-            jsApi.ankiGetLrnCardCount(),
-            jsApi.ankiGetRevCardCount()
-        )
+        val countList =
+            listOf(
+                jsApi.ankiGetNewCardCount(),
+                jsApi.ankiGetLrnCardCount(),
+                jsApi.ankiGetRevCardCount(),
+            )
 
-        val expected = listOf(
-            newCount,
-            stepCount,
-            revCount
-        )
+        val expected =
+            listOf(
+                newCount,
+                stepCount,
+                revCount,
+            )
 
         assertThat(
             countList.toString(),
-            equalTo(expected.toString())
+            equalTo(expected.toString()),
         ) // We use toString as hamcrest does not print the whole array and stops at [0].
     }
 
-    private fun answerCardOrdinalAsGood(r: Reviewer, i: Int) {
+    private fun answerCardOrdinalAsGood(
+        r: Reviewer,
+        i: Int,
+    ) {
         assertCurrentOrdIs(r, i)
 
         r.answerCard(Consts.BUTTON_THREE)
@@ -352,7 +371,10 @@ class ReviewerTest : RobolectricTest() {
         waitForAsyncTasksToComplete()
     }
 
-    private fun assertCurrentOrdIs(r: Reviewer, i: Int) {
+    private fun assertCurrentOrdIs(
+        r: Reviewer,
+        i: Int,
+    ) {
         waitForAsyncTasksToComplete()
         val ord = r.currentCard!!.ord
 
@@ -378,7 +400,11 @@ class ReviewerTest : RobolectricTest() {
     }
 
     @Throws(ConfirmModSchemaException::class)
-    private fun cloneTemplate(notetypes: Notetypes, m: NotetypeJson?, extra: String) {
+    private fun cloneTemplate(
+        notetypes: Notetypes,
+        m: NotetypeJson?,
+        extra: String,
+    ) {
         val tmpls = m!!.getJSONArray("tmpls")
         val defaultTemplate = tmpls.getJSONObject(0)
 
@@ -445,7 +471,10 @@ class ReviewerTest : RobolectricTest() {
             return startReviewer(testClass, Reviewer::class.java)
         }
 
-        fun <T : Reviewer?> startReviewer(testClass: RobolectricTest, clazz: Class<T>): T {
+        fun <T : Reviewer?> startReviewer(
+            testClass: RobolectricTest,
+            clazz: Class<T>,
+        ): T {
             val reviewer = startActivityNormallyOpenCollectionWithIntent(testClass, clazz, Intent())
             waitForAsyncTasksToComplete()
             return reviewer

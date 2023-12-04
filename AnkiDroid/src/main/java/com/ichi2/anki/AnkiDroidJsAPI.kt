@@ -81,7 +81,10 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
      * @param apiName
      * @param apiErrorCode
      */
-    fun isInit(apiName: String, apiErrorCode: Int): Boolean {
+    fun isInit(
+        apiName: String,
+        apiErrorCode: Int,
+    ): Boolean {
         if (isAnkiApiNull(apiName)) {
             showDeveloperContact(AnkiDroidJsAPIConstants.ankiJsErrorCodeDefault)
             return false
@@ -116,7 +119,10 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
     /**
      * Supplied api version must be equal to current api version to call mark card, toggle flag functions etc.
      */
-    private fun requireApiVersion(apiVer: String, apiDevContact: String): Boolean {
+    private fun requireApiVersion(
+        apiVer: String,
+        apiDevContact: String,
+    ): Boolean {
         try {
             if (apiDevContact.isEmpty()) {
                 return false
@@ -125,10 +131,10 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
             val versionSupplied = Version.valueOf(apiVer)
 
             /*
-            * if api major version equals to supplied major version then return true and also check for minor version and patch version
-            * show toast for update and contact developer if need updates
-            * otherwise return false
-            */
+             * if api major version equals to supplied major version then return true and also check for minor version and patch version
+             * show toast for update and contact developer if need updates
+             * otherwise return false
+             */
             return when {
                 versionSupplied == versionCurrent -> {
                     true
@@ -405,7 +411,10 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
     }
 
     @JavascriptInterface
-    fun ankiTtsSpeak(text: String?, queueMode: Int): Int {
+    fun ankiTtsSpeak(
+        text: String?,
+        queueMode: Int,
+    ): Int {
         return mTalker.speak(text, queueMode)
     }
 
@@ -461,17 +470,18 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
 
     @JavascriptInterface
     fun ankiSearchCardWithCallback(query: String) {
-        val cards = try {
-            runBlocking {
-                searchForCards(query, SortOrder.UseCollectionOrdering(), CardsOrNotes.CARDS)
+        val cards =
+            try {
+                runBlocking {
+                    searchForCards(query, SortOrder.UseCollectionOrdering(), CardsOrNotes.CARDS)
+                }
+            } catch (exc: Exception) {
+                activity.webView!!.evaluateJavascript(
+                    "console.log('${context.getString(R.string.search_card_js_api_no_results)}')",
+                    null,
+                )
+                return
             }
-        } catch (exc: Exception) {
-            activity.webView!!.evaluateJavascript(
-                "console.log('${context.getString(R.string.search_card_js_api_no_results)}')",
-                null
-            )
-            return
-        }
         val searchResult: MutableList<String> = ArrayList()
         for (s in cards) {
             val jsonObject = JSONObject()

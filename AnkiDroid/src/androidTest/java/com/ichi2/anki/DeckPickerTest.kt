@@ -70,8 +70,8 @@ class DeckPickerTest {
         onView(withId(R.id.files)).perform(
             RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText("TestDeck$testString")),
-                clickChildViewWithId(R.id.counts_layout)
-            )
+                clickChildViewWithId(R.id.counts_layout),
+            ),
         )
 
         // without this sleep, the study options fragment sometimes loses the "load and become active" race vs the assertion below.
@@ -81,7 +81,7 @@ class DeckPickerTest {
         // Check if currently open Activity is StudyOptionsActivity
         assertThat(
             activityInstance,
-            instanceOf(StudyOptionsActivity::class.java)
+            instanceOf(StudyOptionsActivity::class.java),
         )
     }
 
@@ -112,8 +112,8 @@ class DeckPickerTest {
         onView(withId(R.id.files)).perform(
             RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                 hasDescendant(withText("TestDeck$testString")),
-                clickChildViewWithId(R.id.counts_layout)
-            )
+                clickChildViewWithId(R.id.counts_layout),
+            ),
         )
 
         // Create a card belonging to the new deck, using Basic type (guaranteed to exist)

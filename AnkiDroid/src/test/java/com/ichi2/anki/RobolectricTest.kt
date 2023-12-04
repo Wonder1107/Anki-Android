@@ -68,7 +68,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 open class RobolectricTest : AndroidTest {
-
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private fun Any.wait(timeMs: Long) = (this as Object).wait(timeMs)
 
@@ -106,10 +105,11 @@ open class RobolectricTest : AndroidTest {
         // disable the collection log file for a speed boost & reduce log output
         CollectionManager.disableLogFile = disableCollectionLogFile
         // See the Android logging (from Timber)
-        ShadowLog.stream = System.out
-            // Filters for non-Timber sources. Prefer filtering in RobolectricDebugTree if possible
-            // LifecycleMonitor: not needed as we already use registerActivityLifecycleCallbacks for logs
-            .filter("^(?!(W/ShadowLegacyPath|D/LifecycleMonitor)).*$") // W/ShadowLegacyPath: android.graphics.Path#op() not supported yet.
+        ShadowLog.stream =
+            System.out
+                // Filters for non-Timber sources. Prefer filtering in RobolectricDebugTree if possible
+                // LifecycleMonitor: not needed as we already use registerActivityLifecycleCallbacks for logs
+                .filter("^(?!(W/ShadowLegacyPath|D/LifecycleMonitor)).*$") // W/ShadowLegacyPath: android.graphics.Path#op() not supported yet.
 
         Storage.setUseInMemory(useInMemoryDatabase())
 
@@ -176,7 +176,10 @@ open class RobolectricTest : AndroidTest {
         runBlocking { CollectionManager.discardBackend() }
     }
 
-    protected fun clickMaterialDialogButton(button: WhichButton, @Suppress("SameParameterValue") checkDismissed: Boolean) {
+    protected fun clickMaterialDialogButton(
+        button: WhichButton,
+        @Suppress("SameParameterValue") checkDismissed: Boolean,
+    ) {
         val dialog = ShadowDialog.getLatestDialog() as MaterialDialog
         dialog.getActionButton(button).performClick()
         if (checkDismissed) {
@@ -187,7 +190,10 @@ open class RobolectricTest : AndroidTest {
     /**
      * Click on a dialog button for an AlertDialog dialog box. Replaces the above helper.
      */
-    protected fun clickAlertDialogButton(button: Int, @Suppress("SameParameterValue") checkDismissed: Boolean) {
+    protected fun clickAlertDialogButton(
+        button: Int,
+        @Suppress("SameParameterValue") checkDismissed: Boolean,
+    ) {
         val dialog = ShadowDialog.getLatestDialog() as AlertDialog
 
         dialog.getButton(button).performClick()
@@ -204,7 +210,9 @@ open class RobolectricTest : AndroidTest {
      *
      * @param checkDismissed true if you want to check for dismissed, will return null even if dialog exists but has been dismissed
      */
-    protected fun getMaterialDialogText(@Suppress("SameParameterValue") checkDismissed: Boolean): String? {
+    protected fun getMaterialDialogText(
+        @Suppress("SameParameterValue") checkDismissed: Boolean,
+    ): String? {
         val dialog: MaterialDialog = ShadowDialog.getLatestDialog() as MaterialDialog
         if (checkDismissed && Shadows.shadowOf(dialog).hasBeenDismissed()) {
             Timber.e("The latest dialog has already been dismissed.")
@@ -220,7 +228,9 @@ open class RobolectricTest : AndroidTest {
      * @param checkDismissed true if you want to check for dismissed, will return null even if dialog exists but has been dismissed
      * TODO: Rename to getDialogText when all MaterialDialogs are changed to AlertDialogs
      */
-    protected fun getAlertDialogText(@Suppress("SameParameterValue") checkDismissed: Boolean): String? {
+    protected fun getAlertDialogText(
+        @Suppress("SameParameterValue") checkDismissed: Boolean,
+    ): String? {
         val dialog = ShadowDialog.getLatestDialog() as AlertDialog
         if (checkDismissed && Shadows.shadowOf(dialog).hasBeenDismissed()) {
             Timber.e("The latest dialog has already been dismissed.")
@@ -283,7 +293,11 @@ open class RobolectricTest : AndroidTest {
         }
 
         @JvmStatic // Using protected members which are not @JvmStatic in the superclass companion is unsupported yet
-        protected fun <T : AnkiActivity?> startActivityNormallyOpenCollectionWithIntent(testClass: RobolectricTest, clazz: Class<T>?, i: Intent?): T {
+        protected fun <T : AnkiActivity?> startActivityNormallyOpenCollectionWithIntent(
+            testClass: RobolectricTest,
+            clazz: Class<T>?,
+            i: Intent?,
+        ): T {
             if (AbstractFlashcardViewer::class.java.isAssignableFrom(clazz!!)) {
                 // fixes 'Don't know what to do with dataSource...' inside Sounds.kt
                 // solution from https://github.com/robolectric/robolectric/issues/4673
@@ -291,8 +305,9 @@ open class RobolectricTest : AndroidTest {
                     ShadowMediaPlayer.MediaInfo(1, 0)
                 }
             }
-            val controller = Robolectric.buildActivity(clazz, i)
-                .create().start().resume().visible()
+            val controller =
+                Robolectric.buildActivity(clazz, i)
+                    .create().start().resume().visible()
             advanceRobolectricLooperWithSleep()
             advanceRobolectricLooperWithSleep()
             testClass.saveControllerForCleanup(controller)
@@ -325,7 +340,11 @@ open class RobolectricTest : AndroidTest {
         return targetContext.getString(res)
     }
 
-    protected fun getQuantityString(res: Int, quantity: Int, vararg formatArgs: Any): String {
+    protected fun getQuantityString(
+        res: Int,
+        quantity: Int,
+        vararg formatArgs: Any,
+    ): String {
         return targetContext.resources.getQuantityString(res, quantity, *formatArgs)
     }
 
@@ -333,11 +352,12 @@ open class RobolectricTest : AndroidTest {
      * Each time time is checked, it advance by 10 ms. Not enough to create any change visible to user, but ensure
      * we don't get two equal time. */
     val col: Collection
-        get() = try {
-            CollectionHelper.instance.getColUnsafe(targetContext)!!
-        } catch (e: UnsatisfiedLinkError) {
-            throw RuntimeException("Failed to load collection. Did you call super.setUp()?", e)
-        }
+        get() =
+            try {
+                CollectionHelper.instance.getColUnsafe(targetContext)!!
+            } catch (e: UnsatisfiedLinkError) {
+                throw RuntimeException("Failed to load collection. Did you call super.setUp()?", e)
+            }
 
     protected val collectionTime: MockTime
         get() = TimeManager.time as MockTime
@@ -345,10 +365,12 @@ open class RobolectricTest : AndroidTest {
     /** Call this method in your test if you to test behavior with a null collection  */
     protected fun enableNullCollection() {
         CollectionManager.closeCollectionBlocking()
-        CollectionHelper.setInstanceForTesting(object : CollectionHelper() {
-            @Synchronized
-            override fun getColUnsafe(context: Context?): Collection? = null
-        })
+        CollectionHelper.setInstanceForTesting(
+            object : CollectionHelper() {
+                @Synchronized
+                override fun getColUnsafe(context: Context?): Collection? = null
+            },
+        )
         CollectionManager.emulateOpenFailure = true
     }
 
@@ -364,7 +386,10 @@ open class RobolectricTest : AndroidTest {
         return NotetypeJson(collectionModels.byName(modelName).toString().trim { it <= ' ' })
     }
 
-    protected fun <T : AnkiActivity?> startActivityNormallyOpenCollectionWithIntent(clazz: Class<T>?, i: Intent?): T {
+    protected fun <T : AnkiActivity?> startActivityNormallyOpenCollectionWithIntent(
+        clazz: Class<T>?,
+        i: Intent?,
+    ): T {
         return startActivityNormallyOpenCollectionWithIntent(this, clazz, i)
     }
 
@@ -376,11 +401,17 @@ open class RobolectricTest : AndroidTest {
         return startActivityNormallyOpenCollectionWithIntent(T::class.java, i)
     }
 
-    protected fun addNoteUsingBasicModel(front: String = "Front", back: String = "Back"): Note {
+    protected fun addNoteUsingBasicModel(
+        front: String = "Front",
+        back: String = "Back",
+    ): Note {
         return addNoteUsingModelName("Basic", front, back)
     }
 
-    protected fun addRevNoteUsingBasicModelDueToday(@Suppress("SameParameterValue") front: String, @Suppress("SameParameterValue") back: String): Note {
+    protected fun addRevNoteUsingBasicModelDueToday(
+        @Suppress("SameParameterValue") front: String,
+        @Suppress("SameParameterValue") back: String,
+    ): Note {
         val note = addNoteUsingBasicModel(front, back)
         val card = note.firstCard()
         card.queue = Consts.QUEUE_TYPE_REV
@@ -389,17 +420,27 @@ open class RobolectricTest : AndroidTest {
         return note
     }
 
-    protected fun addNoteUsingBasicAndReversedModel(front: String, back: String): Note {
+    protected fun addNoteUsingBasicAndReversedModel(
+        front: String,
+        back: String,
+    ): Note {
         return addNoteUsingModelName("Basic (and reversed card)", front, back)
     }
 
-    protected fun addNoteUsingBasicTypedModel(@Suppress("SameParameterValue") front: String, @Suppress("SameParameterValue") back: String): Note {
+    protected fun addNoteUsingBasicTypedModel(
+        @Suppress("SameParameterValue") front: String,
+        @Suppress("SameParameterValue") back: String,
+    ): Note {
         return addNoteUsingModelName("Basic (type in the answer)", front, back)
     }
 
-    protected fun addNoteUsingModelName(name: String?, vararg fields: String): Note {
-        val model = col.notetypes.byName((name)!!)
-            ?: throw IllegalArgumentException("Could not find model '$name'")
+    protected fun addNoteUsingModelName(
+        name: String?,
+        vararg fields: String,
+    ): Note {
+        val model =
+            col.notetypes.byName((name)!!)
+                ?: throw IllegalArgumentException("Could not find model '$name'")
         // PERF: if we modify newNote(), we can return the card and return a Pair<Note, Card> here.
         // Saves a database trip afterwards.
         val n = col.newNote(model)
@@ -410,7 +451,12 @@ open class RobolectricTest : AndroidTest {
         return n
     }
 
-    protected fun addNonClozeModel(name: String, fields: Array<String>, qfmt: String?, afmt: String?): String {
+    protected fun addNonClozeModel(
+        name: String,
+        fields: Array<String>,
+        qfmt: String?,
+        afmt: String?,
+    ): String {
         val model = col.notetypes.newModel(name)
         for (field in fields) {
             col.notetypes.addFieldInNewModel(model, col.notetypes.newField(field))
@@ -425,12 +471,18 @@ open class RobolectricTest : AndroidTest {
 
     /** Adds a note with Text to Speech functionality */
     @Suppress("SameParameterValue")
-    protected fun addNoteUsingTextToSpeechNoteType(front: String, back: String) {
+    protected fun addNoteUsingTextToSpeechNoteType(
+        front: String,
+        back: String,
+    ) {
         addNonClozeModel("TTS", arrayOf("Front", "Back"), "{{Front}}{{tts en_GB:Front}}", "{{tts en_GB:Front}}<br>{{Back}}")
         addNoteUsingModelName("TTS", front, back)
     }
 
-    private fun addField(notetype: NotetypeJson, name: String) {
+    private fun addField(
+        notetype: NotetypeJson,
+        name: String,
+    ) {
         val models = col.notetypes
         try {
             models.addField(notetype, models.newField(name))
@@ -488,7 +540,10 @@ open class RobolectricTest : AndroidTest {
      * @see org.hamcrest.CoreMatchers
      * @see org.junit.matchers.JUnitMatchers
      */
-    fun <T> assumeThat(actual: T, matcher: Matcher<T>?) {
+    fun <T> assumeThat(
+        actual: T,
+        matcher: Matcher<T>?,
+    ) {
         advanceRobolectricLooperWithSleep()
         Assume.assumeThat(actual, matcher)
     }
@@ -510,7 +565,11 @@ open class RobolectricTest : AndroidTest {
      * @see org.hamcrest.CoreMatchers
      * @see org.junit.matchers.JUnitMatchers
      */
-    fun <T> assumeThat(message: String?, actual: T, matcher: Matcher<T>?) {
+    fun <T> assumeThat(
+        message: String?,
+        actual: T,
+        matcher: Matcher<T>?,
+    ) {
         advanceRobolectricLooperWithSleep()
         Assume.assumeThat(message, actual, matcher)
     }
@@ -522,12 +581,18 @@ open class RobolectricTest : AndroidTest {
      * throwing {@link AssumptionViolatedException}.
      * @param message A message to pass to {@link AssumptionViolatedException}.
      */
-    fun assumeTrue(message: String?, b: Boolean) {
+    fun assumeTrue(
+        message: String?,
+        b: Boolean,
+    ) {
         advanceRobolectricLooperWithSleep()
         Assume.assumeTrue(message, b)
     }
 
-    fun equalFirstField(expected: Card, obtained: Card) {
+    fun equalFirstField(
+        expected: Card,
+        obtained: Card,
+    ) {
         MatcherAssert.assertThat(obtained.note().fields[0], Matchers.equalTo(expected.note().fields[0]))
     }
 
@@ -547,8 +612,7 @@ open class RobolectricTest : AndroidTest {
      * ```
      */
     @Suppress("MemberVisibilityCanBePrivate")
-    fun editPreferences(action: SharedPreferences.Editor.() -> Unit) =
-        getPreferences().edit(action = action)
+    fun editPreferences(action: SharedPreferences.Editor.() -> Unit) = getPreferences().edit(action = action)
 
     private fun maybeSetupBackend() {
         try {
@@ -573,7 +637,7 @@ open class RobolectricTest : AndroidTest {
 * Apple Menu - System Preferences - Security & Privacy - General (tab) - Unlock Settings - Select Allow Anyway". 
     Button is underneath the text: "librsdroid.dylib was blocked from use because it is not from an identified developer"
 * Press "OK" on the "Apple cannot check it for malicious software" prompt
-* Test should execute correctly"""
+* Test should execute correctly""",
                 )
             }
             throw e
@@ -599,7 +663,7 @@ open class RobolectricTest : AndroidTest {
     fun runTest(
         context: CoroutineContext = EmptyCoroutineContext,
         dispatchTimeoutMs: Long = 60_000L,
-        testBody: suspend TestScope.() -> Unit
+        testBody: suspend TestScope.() -> Unit,
     ) {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         runTest(context, dispatchTimeoutMs.milliseconds) {

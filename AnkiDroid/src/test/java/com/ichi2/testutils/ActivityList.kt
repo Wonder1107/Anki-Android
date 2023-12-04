@@ -46,7 +46,7 @@ object ActivityList {
             get(IntentHandler::class.java) { ctx: Context ->
                 getReviewDeckIntent(
                     ctx,
-                    1L
+                    1L,
                 )
             },
             get(StudyOptionsActivity::class.java),
@@ -74,7 +74,7 @@ object ActivityList {
             get(IntroductionActivity::class.java),
             get(ManageNotetypes::class.java),
             get(ManageSpaceActivity::class.java),
-            get(PermissionsActivity::class.java)
+            get(PermissionsActivity::class.java),
         )
     }
 
@@ -92,19 +92,20 @@ object ActivityList {
 
     class ActivityLaunchParam(
         var activity: Class<out Activity>,
-        private var intentBuilder: Function<Context, Intent>
+        private var intentBuilder: Function<Context, Intent>,
     ) {
         val simpleName: String = activity.simpleName
 
-        fun build(context: Context): ActivityController<out Activity> = Robolectric
-            .buildActivity(activity, intentBuilder.apply(context))
+        fun build(context: Context): ActivityController<out Activity> =
+            Robolectric
+                .buildActivity(activity, intentBuilder.apply(context))
 
         val className: String = activity.name
 
         companion object {
             operator fun get(
                 clazz: Class<out Activity>,
-                i: Function<Context, Intent> = Function { Intent() }
+                i: Function<Context, Intent> = Function { Intent() },
             ): ActivityLaunchParam = ActivityLaunchParam(clazz, i)
         }
     }

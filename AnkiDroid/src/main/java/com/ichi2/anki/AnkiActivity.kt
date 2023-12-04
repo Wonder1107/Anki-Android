@@ -59,7 +59,6 @@ import timber.log.Timber
 
 @UiThread
 open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
-
     /** The name of the parent class (example: 'Reviewer')  */
     private val mActivityName: String
     val dialogHandler = DialogHandler(this)
@@ -70,7 +69,9 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         mActivityName = javaClass.simpleName
     }
 
-    constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId) {
+    constructor(
+        @LayoutRes contentLayoutId: Int,
+    ) : super(contentLayoutId) {
         mActivityName = javaClass.simpleName
     }
 
@@ -86,7 +87,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         if (AdaptionUtil.isUserATestClient) {
             window.setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
             )
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -108,7 +109,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         super.onResume()
         UsageAnalytics.sendAnalyticsScreenView(this)
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).cancel(
-            SIMPLE_NOTIFICATION_ID
+            SIMPLE_NOTIFICATION_ID,
         )
         // Show any pending dialogs which were stored persistently
         dialogHandler.executeMessage()
@@ -171,14 +172,20 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         super.setContentView(view)
     }
 
-    override fun setContentView(view: View, params: ViewGroup.LayoutParams) {
+    override fun setContentView(
+        view: View,
+        params: ViewGroup.LayoutParams,
+    ) {
         if (animationDisabled()) {
             view.clearAnimation()
         }
         super.setContentView(view, params)
     }
 
-    override fun addContentView(view: View, params: ViewGroup.LayoutParams) {
+    override fun addContentView(
+        view: View,
+        params: ViewGroup.LayoutParams,
+    ) {
         if (animationDisabled()) {
             view.clearAnimation()
         }
@@ -197,7 +204,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
 
     fun startActivityWithAnimation(
         intent: Intent,
-        animation: Direction
+        animation: Direction,
     ) {
         enableIntentAnimation(intent)
         super.startActivity(intent)
@@ -216,7 +223,10 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     }
 
     @Suppress("DEPRECATION") // startActivityForResult
-    fun startActivityForResultWithoutAnimation(intent: Intent, requestCode: Int) {
+    fun startActivityForResultWithoutAnimation(
+        intent: Intent,
+        requestCode: Int,
+    ) {
         disableIntentAnimation(intent)
         startActivityForResult(intent, requestCode)
         disableActivityAnimation()
@@ -226,7 +236,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     fun startActivityForResultWithAnimation(
         intent: Intent,
         requestCode: Int,
-        animation: Direction
+        animation: Direction,
     ) {
         enableIntentAnimation(intent)
         startActivityForResult(intent, requestCode)
@@ -236,12 +246,12 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     private fun launchActivityForResult(
         intent: Intent?,
         launcher: ActivityResultLauncher<Intent?>,
-        animation: Direction?
+        animation: Direction?,
     ) {
         try {
             launcher.launch(
                 intent,
-                ActivityTransitionAnimation.getAnimationOptions(this, animation)
+                ActivityTransitionAnimation.getAnimationOptions(this, animation),
             )
         } catch (e: ActivityNotFoundException) {
             Timber.w(e)
@@ -252,7 +262,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     fun launchActivityForResultWithAnimation(
         intent: Intent,
         launcher: ActivityResultLauncher<Intent?>,
-        animation: Direction?
+        animation: Direction?,
     ) {
         enableIntentAnimation(intent)
         launchActivityForResult(intent, launcher, animation)
@@ -273,7 +283,10 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         view.clearAnimation()
     }
 
-    protected fun enableViewAnimation(view: View, animation: Animation?) {
+    protected fun enableViewAnimation(
+        view: View,
+        animation: Animation?,
+    ) {
         if (animationDisabled()) {
             disableViewAnimation(view)
         } else {
@@ -315,7 +328,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         // Open collection asynchronously if it hasn't already been opened
         showProgressBar()
         CollectionLoader.load(
-            this
+            this,
         ) { col: Collection? ->
             if (col != null) {
                 Timber.d("Asynchronously calling onCollectionLoaded")
@@ -364,28 +377,30 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
             showThemedToast(
                 this,
                 resources.getString(R.string.no_browser_notification) + url,
-                false
+                false,
             )
             return
         }
         val toolbarColor = MaterialColors.getColor(this, R.attr.appBarColor, 0)
         val navBarColor = MaterialColors.getColor(this, R.attr.customTabNavBarColor, 0)
-        val colorSchemeParams = CustomTabColorSchemeParams.Builder()
-            .setToolbarColor(toolbarColor)
-            .setNavigationBarColor(navBarColor)
-            .build()
-        val builder = CustomTabsIntent.Builder(customTabActivityHelper.session)
-            .setShowTitle(true)
-            .setStartAnimations(this, R.anim.slide_right_in, R.anim.slide_left_out)
-            .setExitAnimations(this, R.anim.slide_left_in, R.anim.slide_right_out)
-            .setCloseButtonIcon(
-                BitmapFactory.decodeResource(
-                    this.resources,
-                    R.drawable.ic_back_arrow_custom_tab
+        val colorSchemeParams =
+            CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(toolbarColor)
+                .setNavigationBarColor(navBarColor)
+                .build()
+        val builder =
+            CustomTabsIntent.Builder(customTabActivityHelper.session)
+                .setShowTitle(true)
+                .setStartAnimations(this, R.anim.slide_right_in, R.anim.slide_left_out)
+                .setExitAnimations(this, R.anim.slide_left_in, R.anim.slide_right_out)
+                .setCloseButtonIcon(
+                    BitmapFactory.decodeResource(
+                        this.resources,
+                        R.drawable.ic_back_arrow_custom_tab,
+                    ),
                 )
-            )
-            .setColorScheme(customTabsColorScheme)
-            .setDefaultColorSchemeParams(colorSchemeParams)
+                .setColorScheme(customTabsColorScheme)
+                .setDefaultColorSchemeParams(colorSchemeParams)
         val customTabsIntent = builder.build()
         CustomTabsHelper.addKeepAliveExtra(this, customTabsIntent.intent)
         CustomTabActivityHelper.openCustomTab(this, customTabsIntent, url, CustomTabsFallback())
@@ -395,18 +410,21 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
         openUrl(Uri.parse(urlString))
     }
 
-    fun openUrl(@StringRes url: Int) {
+    fun openUrl(
+        @StringRes url: Int,
+    ) {
         openUrl(getString(url))
     }
 
     private val customTabsColorScheme: Int
-        get() = if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            COLOR_SCHEME_SYSTEM
-        } else if (Themes.currentTheme.isNightMode) {
-            COLOR_SCHEME_DARK
-        } else {
-            COLOR_SCHEME_LIGHT
-        }
+        get() =
+            if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
+                COLOR_SCHEME_SYSTEM
+            } else if (Themes.currentTheme.isNightMode) {
+                COLOR_SCHEME_DARK
+            } else {
+                COLOR_SCHEME_LIGHT
+            }
 
     /**
      * Global method to show dialog fragment including adding it to back stack Note: DO NOT call this from an async
@@ -440,7 +458,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
      */
     fun showAsyncDialogFragment(
         newFragment: AsyncDialogFragment,
-        channel: Channel
+        channel: Channel,
     ) {
         try {
             showDialogFragment(newFragment)
@@ -467,7 +485,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     open fun showSimpleMessageDialog(
         message: String?,
         title: String = "",
-        reload: Boolean = false
+        reload: Boolean = false,
     ) {
         val newFragment: AsyncDialogFragment =
             SimpleMessageDialog.newInstance(title, message, reload)
@@ -477,31 +495,33 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     fun showSimpleNotification(
         title: String,
         message: String?,
-        channel: Channel
+        channel: Channel,
     ) {
         val prefs = this.sharedPrefs()
         // Show a notification unless all notifications have been totally disabled
         if (prefs.getString(MINIMUM_CARDS_DUE_FOR_NOTIFICATION, "0")!!
-            .toInt() <= Preferences.PENDING_NOTIFICATIONS_ONLY
+                .toInt() <= Preferences.PENDING_NOTIFICATIONS_ONLY
         ) {
             // Use the title as the ticker unless the title is simply "AnkiDroid"
-            val ticker: String? = if (title == resources.getString(R.string.app_name)) {
-                message
-            } else {
-                title
-            }
+            val ticker: String? =
+                if (title == resources.getString(R.string.app_name)) {
+                    message
+                } else {
+                    title
+                }
             // Build basic notification
-            val builder = NotificationCompat.Builder(
-                this,
-                channel.id
-            )
-                .setSmallIcon(R.drawable.ic_star_notify)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setColor(this.getColor(R.color.material_light_blue_500))
-                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setTicker(ticker)
+            val builder =
+                NotificationCompat.Builder(
+                    this,
+                    channel.id,
+                )
+                    .setSmallIcon(R.drawable.ic_star_notify)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setColor(this.getColor(R.color.material_light_blue_500))
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setTicker(ticker)
             // Enable vibrate and blink if set in preferences
             if (prefs.getBoolean("widgetVibrate", false)) {
                 builder.setVibrate(longArrayOf(1000, 1000, 1000))
@@ -512,13 +532,14 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
             // Creates an explicit intent for an Activity in your app
             val resultIntent = Intent(this, DeckPicker::class.java)
             resultIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            val resultPendingIntent = PendingIntentCompat.getActivity(
-                this,
-                0,
-                resultIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT,
-                false
-            )
+            val resultPendingIntent =
+                PendingIntentCompat.getActivity(
+                    this,
+                    0,
+                    resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT,
+                    false,
+                )
             builder.setContentIntent(resultPendingIntent)
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             // mId allows you to update the notification later on.
@@ -540,7 +561,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     fun dismissAllDialogFragments() {
         supportFragmentManager.popBackStack(
             DIALOG_FRAGMENT_TAG,
-            FragmentManager.POP_BACK_STACK_INCLUSIVE
+            FragmentManager.POP_BACK_STACK_INCLUSIVE,
         )
     }
 
@@ -550,9 +571,10 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
      * @throws IllegalStateException if the bar could not be enabled
      */
     protected fun enableToolbar(): ActionBar {
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-            ?: // likely missing "<include layout="@layout/toolbar" />"
-            throw IllegalStateException("Unable to find toolbar")
+        val toolbar =
+            findViewById<Toolbar>(R.id.toolbar)
+                ?: // likely missing "<include layout="@layout/toolbar" />"
+                throw IllegalStateException("Unable to find toolbar")
         setSupportActionBar(toolbar)
         return supportActionBar!!
     }
@@ -564,9 +586,10 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
      * @throws IllegalStateException if the bar could not be enabled
      */
     protected fun enableToolbar(view: View): ActionBar {
-        val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
-            ?: // likely missing "<include layout="@layout/toolbar" />"
-            throw IllegalStateException("Unable to find toolbar: $view")
+        val toolbar =
+            view.findViewById<Toolbar>(R.id.toolbar)
+                ?: // likely missing "<include layout="@layout/toolbar" />"
+                throw IllegalStateException("Unable to find toolbar: $view")
         setSupportActionBar(toolbar)
         return supportActionBar!!
     }
@@ -574,7 +597,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
     protected fun showedActivityFailedScreen(savedInstanceState: Bundle?) =
         showedActivityFailedScreen(
             savedInstanceState = savedInstanceState,
-            activitySuperOnCreate = { state -> super.onCreate(state) }
+            activitySuperOnCreate = { state -> super.onCreate(state) },
         )
 
     companion object {
@@ -590,11 +613,17 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener {
             ActivityTransitionAnimation.slide(activity, FADE)
         }
 
-        fun showDialogFragment(activity: AnkiActivity, newFragment: DialogFragment) {
+        fun showDialogFragment(
+            activity: AnkiActivity,
+            newFragment: DialogFragment,
+        ) {
             showDialogFragment(activity.supportFragmentManager, newFragment)
         }
 
-        fun showDialogFragment(manager: FragmentManager, newFragment: DialogFragment) {
+        fun showDialogFragment(
+            manager: FragmentManager,
+            newFragment: DialogFragment,
+        ) {
             // DialogFragment.show() will take care of adding the fragment
             // in a transaction. We also want to remove any currently showing
             // dialog, so make our own transaction and take care of that here.

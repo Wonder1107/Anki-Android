@@ -35,9 +35,10 @@ abstract class NoteEditorTest protected constructor() {
     var runtimePermissionRule: TestRule? = GrantStoragePermission.instance
 
     @get:Rule
-    var activityRule: ActivityScenarioRule<NoteEditor>? = ActivityScenarioRule(
-        noteEditorIntent
-    )
+    var activityRule: ActivityScenarioRule<NoteEditor>? =
+        ActivityScenarioRule(
+            noteEditorIntent,
+        )
 
     private val noteEditorIntent: Intent
         get() {
@@ -54,8 +55,8 @@ abstract class NoteEditorTest protected constructor() {
                 "Test fails on Travis API $invalid",
                 Build.VERSION.SDK_INT,
                 Matchers.not(
-                    Matchers.`is`(invalid)
-                )
+                    Matchers.`is`(invalid),
+                ),
             )
         }
     }
@@ -67,7 +68,7 @@ abstract class NoteEditorTest protected constructor() {
             /*
              java.lang.AssertionError: Activity never becomes requested state "[DESTROYED]" (last lifecycle transition = "PAUSED")
              at androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:301)
-              */
+             */
             val invalid = Build.VERSION_CODES.N_MR1
             val integers = ArrayList(listOf(invalid))
             integers.addAll(invalidSdks!!)

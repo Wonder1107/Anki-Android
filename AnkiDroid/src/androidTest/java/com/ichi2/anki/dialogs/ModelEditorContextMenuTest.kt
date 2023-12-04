@@ -38,7 +38,7 @@ class ModelEditorContextMenuTest {
     fun showsAllOptionsIfAboveN() {
         launchFragment(
             fragmentArgs = bundleOf(ModelEditorContextMenu.KEY_LABEL to testDialogTitle),
-            themeResId = R.style.Theme_Light
+            themeResId = R.style.Theme_Light,
         ) { MockModelEditorContextMenu(isAtLeastAtN = true) }
         onView(withText(testDialogTitle)).check(matches(isDisplayed()))
         ModelEditorContextMenuAction.entries.forEach {
@@ -51,12 +51,12 @@ class ModelEditorContextMenuTest {
     fun doesNotShowLanguageHintOptionIfBelowN() {
         launchFragment(
             fragmentArgs = bundleOf(ModelEditorContextMenu.KEY_LABEL to testDialogTitle),
-            themeResId = R.style.Theme_Light
+            themeResId = R.style.Theme_Light,
         ) { MockModelEditorContextMenu(isAtLeastAtN = false) }
         onView(withText(testDialogTitle)).check(matches(isDisplayed()))
         // ModelEditorContextMenuAction.AddLanguageHint shouldn't be available
         onView(withText(ModelEditorContextMenuAction.AddLanguageHint.actionTextId)).check(
-            doesNotExist()
+            doesNotExist(),
         )
         // make sure we aren't losing other items besides ModelEditorContextMenuAction.AddLanguageHint
         ModelEditorContextMenuAction.entries
@@ -66,7 +66,7 @@ class ModelEditorContextMenuTest {
     }
 
     class MockModelEditorContextMenu(
-        private val isAtLeastAtN: Boolean
+        private val isAtLeastAtN: Boolean,
     ) : ModelEditorContextMenu() {
         override fun isAtLeastAtN(): Boolean = isAtLeastAtN
     }
